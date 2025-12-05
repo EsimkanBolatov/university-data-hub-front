@@ -2,19 +2,18 @@
 
 @layer base {
   body {
-    /* Меняем bg-gray-50 на deep-blue-900 и текст на белый */
-    @apply bg-deep-blue-900 text-white antialiased selection:bg-neon-blue selection:text-white;
+    /* Светлый фон, темный текст */
+    @apply bg-slate-50 text-slate-800 antialiased font-sans;
   }
 }
 
-/* Кастомный скроллбар для сайдбара */
+/* Скроллбар делаем более аккуратным */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a; 
+  background: transparent; 
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155; 
-  border-radius: 4px;
+  @apply bg-slate-300 rounded-full hover:bg-slate-400; 
 }

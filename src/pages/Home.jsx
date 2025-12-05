@@ -1,117 +1,102 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, TrendingUp, Award, ArrowRight, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, TrendingUp, Users, BookOpen } from 'lucide-react';
 import { universitiesAPI } from '../api/axios';
-import { GlassCard } from '../components/ui/GlassCard';
+import { Card } from '../components/ui/Card';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: topUniversities, isLoading } = useQuery({
-    queryKey: ['universities', { limit: 3 }],
-    queryFn: () => universitiesAPI.getAll({ limit: 3, min_rating: 4.5 }).then(res => res.data),
+  const { data: stats } = useQuery({
+    queryKey: ['stats'],
+    queryFn: () => universitiesAPI.getStats().then(res => res.data),
   });
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/catalog?query=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
   return (
-    <div className="space-y-16 pb-12">
-      {/* Hero Section */}
-      <section className="relative py-20 text-center">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-neon-blue/20 rounded-full blur-[100px] -z-10" />
-        
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-          Найди свой <span className="text-transparent bg-clip-text bg-linear-to-r from-neon-blue to-purple-400">путь</span>
-        </h1>
-        <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-          Единая платформа для поиска, сравнения и поступления в университеты Казахстана.
-        </p>
-
-        <form onSubmit={handleSearch} className="max-w-xl mx-auto relative group">
-          {/* Исправлен градиент ниже */}
-          <div className="absolute -inset-1 bg-linear-to-r from-neon-blue to-purple-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
-          <div className="relative flex items-center bg-deep-blue-900 border border-white/10 rounded-full p-2 pl-6">
-            <Search className="h-5 w-5 text-slate-400 mr-3" />
-            <input
-              type="text"
-              placeholder="ВУЗ, специальность или город..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent text-white placeholder-slate-500 focus:outline-none"
-            />
-            <button type="submit" className="bg-neon-blue text-white px-6 py-2 rounded-full font-medium hover:bg-blue-600 transition">
-              Найти
-            </button>
-          </div>
-        </form>
-      </section>
-
-      {/* Stats / Features */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {[
-          { icon: Search, title: 'Умный поиск', desc: 'Фильтры по ЕНТ и цене' },
-          { icon: TrendingUp, title: 'Сравнение', desc: 'Аналитика и рейтинги' },
-          { icon: Award, title: 'Гранты', desc: 'База грантов 2025' },
-        ].map((item, idx) => (
-          <GlassCard key={idx} className="flex flex-col items-center text-center p-8 hover:border-neon-blue/50">
-            <div className="bg-white/5 p-4 rounded-2xl mb-4 text-neon-blue">
-              <item.icon className="h-8 w-8" />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-            <p className="text-slate-400 text-sm">{item.desc}</p>
-          </GlassCard>
-        ))}
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Обзор системы</h1>
+          <p className="text-slate-500 mt-1">Аналитика высших учебных заведений Казахстана</p>
+        </div>
+        <button 
+            onClick={() => navigate('/catalog')}
+            className="bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-50 transition"
+        >
+            Перейти в каталог →
+        </button>
       </div>
 
-      {/* Top Universities */}
-      <section>
-        <div className="flex justify-between items-end mb-8">
-          <h2 className="text-3xl font-bold text-white">Популярные ВУЗы</h2>
-          <button onClick={() => navigate('/catalog')} className="text-neon-blue hover:text-white flex items-center gap-2 transition">
-            Весь каталог <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Всего ВУЗов" value={stats?.total_universities || 0} icon={BookOpen} color="bg-blue-500" />
+        <StatCard title="Активных программ" value={stats?.total_programs || 0} icon={TrendingUp} color="bg-indigo-500" />
+        <StatCard title="Студентов" value={stats?.total_students?.toLocaleString() || 0} icon={Users} color="bg-emerald-500" />
+        <StatCard title="Городов" value={stats?.total_cities || 0} icon={MapPin} color="bg-orange-500" />
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {isLoading ? (
-            [1,2,3].map(i => <div key={i} className="h-80 bg-white/5 rounded-3xl animate-pulse"/>)
-          ) : (
-            topUniversities?.map(uni => (
-              <div 
-                key={uni.id} 
-                onClick={() => navigate(`/university/${uni.id}`)}
-                className="group relative h-96 rounded-3xl overflow-hidden cursor-pointer"
-              >
-                {/* Исправлен градиент ниже */}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent via-deep-blue-900/50 to-deep-blue-900 z-10"/>
+      {/* Main Dashboard Area */}
+      <div className="grid lg:grid-cols-3 gap-8 h-[500px]">
+        {/* Map / Main Feature Area */}
+        <Card className="lg:col-span-2 relative overflow-hidden p-0 flex flex-col bg-slate-800 text-white border-none">
+            <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/e0/Kazakhstan_adm_location_map.svg')] bg-cover bg-center opacity-20 invert"></div>
+            <div className="relative z-10 p-8">
+                <h3 className="text-2xl font-bold mb-2">География университетов</h3>
+                <p className="text-slate-300 max-w-md">
+                    Наибольшая концентрация учебных заведений находится в Алматы и Астане.
+                </p>
                 
-                <div className="absolute inset-0 bg-blue-900/20 group-hover:scale-105 transition duration-700">
-                   {uni.logo_url && <img src={uni.logo_url} className="w-full h-full object-cover opacity-50 blur-sm group-hover:blur-0 transition" />}
+                <div className="mt-10 flex gap-4">
+                    <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+                        <div className="text-2xl font-bold">Алматы</div>
+                        <div className="text-sm text-slate-300">25 ВУЗов</div>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+                        <div className="text-2xl font-bold">Астана</div>
+                        <div className="text-sm text-slate-300">14 ВУЗов</div>
+                    </div>
                 </div>
+            </div>
+            
+            <div className="mt-auto p-8 border-t border-white/10 bg-white/5 backdrop-blur-md flex justify-between items-center">
+               <span>Используйте поиск для детализации</span>
+               <button onClick={() => navigate('/catalog')} className="text-blue-300 hover:text-white transition">Открыть карту</button>
+            </div>
+        </Card>
 
-                <div className="absolute bottom-0 left-0 right-0 p-8 z-20">
-                  <div className="bg-neon-blue w-fit px-3 py-1 rounded-full text-xs font-bold text-white mb-3">
-                    ⭐ {uni.rating}
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">{uni.name_ru}</h3>
-                  <div className="flex items-center gap-2 text-slate-300 text-sm">
-                    <MapPin className="h-4 w-4 text-neon-blue"/> {uni.city}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+        {/* Top Rated List */}
+        <Card className="flex flex-col">
+            <h3 className="font-bold text-lg mb-6">Топ Рейтинга</h3>
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                {stats?.top_universities?.map((uni, idx) => (
+                    <div key={uni.id} onClick={() => navigate(`/university/${uni.id}`)} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition group">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-600 group-hover:bg-primary-500 group-hover:text-white transition">
+                            {idx + 1}
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-semibold text-sm text-slate-800 line-clamp-1">{uni.name}</h4>
+                            <div className="text-xs text-slate-500">Рейтинг: {uni.rating}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </Card>
+      </div>
     </div>
   );
 };
+
+const StatCard = ({ title, value, icon: Icon, color }) => (
+    <Card className="flex items-center gap-4 hover:-translate-y-1 transition-transform">
+        <div className={`${color} w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20`}>
+            <Icon className="w-6 h-6" />
+        </div>
+        <div>
+            <p className="text-slate-500 text-xs uppercase font-semibold tracking-wider">{title}</p>
+            <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
+        </div>
+    </Card>
+);
 
 export default Home;

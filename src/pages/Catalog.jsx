@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Filter, X, Star, MapPin, Search } from 'lucide-react';
+import { Filter, Star, MapPin, Search, X } from 'lucide-react';
 import { universitiesAPI } from '../api/axios';
-import { GlassCard } from '../components/ui/GlassCard';
+import { Card } from '../components/ui/Card'; // Исправлен импорт
 import { cn } from '../utils/cn';
 
 const Catalog = () => {
@@ -44,26 +44,35 @@ const Catalog = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="mb-8 flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Каталог университетов</h1>
-          <p className="text-slate-400">
-            Найдено {universities?.length || 0} вузов
-          </p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Каталог университетов</h1>
+        <p className="text-slate-500">
+          Найдено {universities?.length || 0} вузов
+        </p>
       </div>
 
-      <div className="flex gap-8">
-        {/* SIDEBAR FILTERS (Desktop) */}
-        {/* ISPFRAVLENO: flex-shrink-0 -> shrink-0 */}
-        <aside className="hidden lg:block w-72 shrink-0">
-          <GlassCard className="sticky top-24 p-6 space-y-6">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* SIDEBAR FILTERS */}
+        <aside className={cn(
+            "lg:w-72 shrink-0 space-y-6 lg:block", // flex-shrink-0 -> shrink-0
+            showFilters ? "fixed inset-0 z-50 bg-white p-6 overflow-y-auto" : "hidden"
+        )}>
+          {/* Mobile Header */}
+          <div className="lg:hidden flex justify-between items-center mb-6">
+             <h2 className="text-xl font-bold text-slate-900">Фильтры</h2>
+             <button onClick={() => setShowFilters(false)}><X className="h-6 w-6 text-slate-500"/></button>
+          </div>
+
+          <Card className="sticky top-24 space-y-6 border-slate-200 shadow-sm">
             <div className="flex justify-between items-center">
-              <h2 className="font-semibold text-lg text-white flex items-center gap-2">
-                <Filter className="h-5 w-5 text-neon-blue" />
+              <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary-600" />
                 Фильтры
               </h2>
-              <button onClick={() => setFilters({ query: '', city: '', min_rating: '', max_price: '' })} className="text-xs text-slate-400 hover:text-white">
+              <button 
+                onClick={() => setFilters({ query: '', city: '', min_rating: '', max_price: '' })} 
+                className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+              >
                 Сбросить
               </button>
             </div>
@@ -73,20 +82,20 @@ const Catalog = () => {
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Поиск..."
+                placeholder="Поиск по названию..."
                 value={filters.query}
                 onChange={(e) => handleFilterChange('query', e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-neon-blue transition"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition text-slate-900 placeholder:text-slate-400"
               />
             </div>
 
             {/* City */}
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-2">Город</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Город</label>
               <select
                 value={filters.city}
                 onChange={(e) => handleFilterChange('city', e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-sm text-white focus:outline-none focus:border-neon-blue [&>option]:bg-deep-blue-900"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-primary-500 transition text-slate-700"
               >
                 <option value="">Все города</option>
                 <option value="Алматы">Алматы</option>
@@ -97,17 +106,17 @@ const Catalog = () => {
 
             {/* Rating */}
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-2">Рейтинг</label>
+              <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Рейтинг</label>
               <div className="flex gap-2">
                 {[4.5, 4.0, 3.5].map(rating => (
                   <button
                     key={rating}
                     onClick={() => handleFilterChange('min_rating', rating === parseFloat(filters.min_rating) ? '' : rating)}
                     className={cn(
-                      "flex-1 py-2 rounded-lg text-xs font-medium border border-white/10 transition",
+                      "flex-1 py-2 rounded-lg text-xs font-medium border transition",
                       parseFloat(filters.min_rating) === rating 
-                        ? "bg-neon-blue text-white border-neon-blue" 
-                        : "bg-white/5 text-slate-300 hover:bg-white/10"
+                        ? "bg-primary-50 text-primary-700 border-primary-200" 
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                     )}
                   >
                     {rating}+ ⭐
@@ -115,68 +124,80 @@ const Catalog = () => {
                 ))}
               </div>
             </div>
-          </GlassCard>
+          </Card>
         </aside>
 
         {/* MOBILE FILTER BUTTON */}
         <button
           onClick={() => setShowFilters(true)}
-          className="lg:hidden fixed bottom-6 right-6 bg-neon-blue text-white p-4 rounded-full shadow-lg z-40 flex items-center gap-2"
+          className="lg:hidden fixed bottom-6 right-6 bg-primary-600 text-white p-4 rounded-full shadow-xl shadow-primary-600/30 z-40 flex items-center justify-center"
         >
-          <Filter className="h-5 w-5" />
+          <Filter className="h-6 w-6" />
         </button>
 
         {/* MAIN GRID */}
         <div className="flex-1">
           {isLoading ? (
-            <div className="grid md:grid-cols-2 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-64 bg-white/5 rounded-3xl animate-pulse" />
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-80 bg-white border border-slate-100 rounded-2xl animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
               {universities?.map((uni) => (
-                <div
+                <Card
                   key={uni.id}
+                  hover={true}
+                  padding="p-0"
                   onClick={() => navigate(`/university/${uni.id}`)}
-                  className="group relative bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-neon-blue/10 cursor-pointer flex flex-col"
+                  className="cursor-pointer overflow-hidden group flex flex-col h-full"
                 >
                   {/* Image Area */}
-                  {/* ISPFRAVLENO: bg-linear-to-br */}
-                  <div className="h-48 bg-linear-to-br from-blue-600/20 to-purple-600/20 relative p-6 flex flex-col justify-between">
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
+                  <div className="h-40 bg-slate-100 relative overflow-hidden">
+                    {/* ISPFRAVLENO: bg-gradient-to-t -> bg-linear-to-t */}
+                    <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 to-transparent z-10" />
                     
-                    <div className="flex justify-between items-start z-10">
-                      <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/10">
-                         {uni.logo_url ? <img src={uni.logo_url} className="w-10 h-10 object-contain" /> : '🎓'}
-                      </div>
-                      <div className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-yellow-400 flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-current" /> {uni.rating.toFixed(1)}
+                    {uni.logo_url ? (
+                        <img 
+                            src={uni.logo_url} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+                            alt={uni.name_ru}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
+                            <Star className="h-12 w-12" />
+                        </div>
+                    )}
+
+                    <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end z-20">
+                      <div className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-xs font-bold text-slate-900 flex items-center gap-1 shadow-sm">
+                        <Star className="h-3 w-3 text-orange-400 fill-current" /> {uni.rating.toFixed(1)}
                       </div>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="font-bold text-xl text-white mb-2 group-hover:text-neon-blue transition">
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="font-bold text-lg text-slate-900 mb-2 group-hover:text-primary-600 transition line-clamp-2">
                       {uni.name_ru}
                     </h3>
-                    <div className="flex items-center gap-2 text-sm text-slate-400 mb-4">
-                      <MapPin className="h-4 w-4 text-neon-blue" />
+                    
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-4">
+                      <MapPin className="h-4 w-4 text-slate-400" />
                       {uni.city}
                     </div>
                     
-                    <div className="mt-auto pt-4 border-t border-white/10 flex justify-between items-center">
-                      <div className="text-xs text-slate-500">
-                        {uni.programs_count > 0 ? `${uni.programs_count} программ` : 'Нет программ'}
+                    <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center">
+                      <div className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md">
+                        {uni.programs_count > 0 ? `${uni.programs_count} программ` : 'Нет данных'}
                       </div>
-                      <span className="text-neon-blue font-bold text-sm">
+                      <span className="text-primary-700 font-bold text-sm">
                         {uni.price_range || 'Цена по запросу'}
                       </span>
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}

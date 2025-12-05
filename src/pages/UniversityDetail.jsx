@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Star, Share2, Globe, Phone, BookOpen, Layers, CheckCircle } from 'lucide-react';
+import { MapPin, Star, Share2, Globe, Phone, Layers, CheckCircle, Clock, BookOpen } from 'lucide-react';
 import { universitiesAPI } from '../api/axios';
-import { GlassCard } from '../components/ui/GlassCard';
+import { Card } from '../components/ui/Card'; // Исправлен импорт
+import { cn } from '../utils/cn';
 
 const UniversityDetail = () => {
   const { id } = useParams();
@@ -12,136 +12,154 @@ const UniversityDetail = () => {
     queryFn: () => universitiesAPI.getById(id).then(res => res.data),
   });
 
-  if (isLoading) return <div className="text-center mt-20 text-neon-blue animate-pulse">Загрузка данных...</div>;
-  if (!uni) return <div className="text-center mt-20 text-white">Университет не найден</div>;
+  if (isLoading) return <div className="text-center mt-20 text-slate-400 animate-pulse">Загрузка данных...</div>;
+  if (!uni) return <div className="text-center mt-20 text-slate-800">Университет не найден</div>;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 pb-12 animate-fade-in">
       
-      {/* HEADER BLOCK */}
-      <div className="relative rounded-[2.5rem] overflow-hidden min-h-[300px] flex items-center p-10 shadow-2xl">
-        {/* ISPFRAVLENO: bg-linear-to-r */}
-        <div className="absolute inset-0 bg-linear-to-r from-blue-900 via-indigo-900 to-deep-blue-900">
-           <div className="absolute inset-0 opacity-40 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
-           <div className="absolute -top-24 -right-24 w-96 h-96 bg-neon-blue/40 rounded-full blur-3xl"></div>
-           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-500/40 rounded-full blur-3xl"></div>
+      {/* HEADER CARD */}
+      <Card className="relative overflow-hidden border-none shadow-lg bg-white">
+        <div className="h-32 bg-primary-800 relative">
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
         </div>
+        <div className="px-8 pb-8">
+            <div className="flex flex-col md:flex-row gap-6 items-start -mt-12 relative z-10">
+                {/* ISPFRAVLENO: shrink-0 */}
+                <div className="w-32 h-32 bg-white rounded-2xl p-2 shadow-lg border border-slate-100 shrink-0">
+                    {uni.logo_url ? (
+                        <img src={uni.logo_url} alt="Logo" className="w-full h-full object-contain rounded-xl" />
+                    ) : (
+                        <div className="w-full h-full bg-slate-50 rounded-xl flex items-center justify-center">
+                            <BookOpen className="text-slate-300 w-10 h-10"/>
+                        </div>
+                    )}
+                </div>
+                
+                <div className="flex-1 pt-2 md:pt-14">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h1 className="text-3xl font-bold text-slate-900">{uni.name_ru}</h1>
+                        <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-current" /> {uni.rating}
+                        </span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-slate-500 text-sm">
+                        <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4"/> {uni.city}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="flex items-center gap-1.5"><Globe className="w-4 h-4"/> {uni.type === 'private' ? 'Частный' : 'Государственный'}</span>
+                    </div>
+                </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 w-full">
-          <div className="w-32 h-32 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 p-4 flex items-center justify-center shadow-lg">
-            {uni.logo_url ? (
-              <img src={uni.logo_url} alt="Logo" className="w-full h-full object-contain drop-shadow-md" />
-            ) : (
-              <BookOpen className="w-12 h-12 text-white" />
-            )}
-          </div>
-          
-          <div className="flex-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-              <span className="px-3 py-1 rounded-full bg-neon-blue text-xs font-bold text-white shadow-lg shadow-neon-blue/50">
-                TOP #{uni.national_ranking || '10'}
-              </span>
-              <span className="flex items-center gap-1 text-yellow-400 font-bold">
-                <Star className="w-4 h-4 fill-current" /> {uni.rating}
-              </span>
+                <div className="pt-2 md:pt-14 flex gap-3 w-full md:w-auto">
+                    <button className="flex-1 md:flex-none py-2.5 px-4 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition flex justify-center items-center gap-2">
+                        <Share2 className="w-4 h-4" />
+                    </button>
+                    <a 
+                        href={uni.website} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex-1 md:flex-none py-2.5 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md transition flex justify-center items-center gap-2"
+                    >
+                        Посетить сайт
+                    </a>
+                </div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 leading-tight">
-              {uni.name_ru}
-            </h1>
-            <p className="text-blue-200 text-lg flex items-center justify-center md:justify-start gap-2">
-              <MapPin className="w-5 h-5" /> {uni.city}
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <button className="p-4 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full border border-white/10 transition">
-              <Share2 className="w-6 h-6 text-white" />
-            </button>
-            <a href={uni.website} target="_blank" className="px-6 py-4 bg-neon-blue hover:bg-blue-600 rounded-full text-white font-bold shadow-lg shadow-neon-blue/30 transition flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              Сайт
-            </a>
-          </div>
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <GlassCard className="border-l-4 border-l-neon-blue">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Layers className="text-neon-blue" />
-              Миссия
+        {/* LEFT COLUMN */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* About */}
+          <section>
+            <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Layers className="text-primary-600 h-5 w-5" />
+              О ВУЗе
             </h3>
-            <p className="text-slate-300 leading-relaxed">
-              {uni.mission || uni.description}
-            </p>
-          </GlassCard>
+            <Card>
+                <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+                {uni.description || uni.mission}
+                </p>
+            </Card>
+          </section>
 
+          {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <GlassCard className="text-center py-6">
-              <div className="text-3xl font-bold text-white mb-1">{uni.total_students ? (uni.total_students/1000).toFixed(1) + 'k' : 'N/A'}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Студентов</div>
-            </GlassCard>
-            <GlassCard className="text-center py-6">
-              <div className="text-3xl font-bold text-white mb-1">{uni.founded_year}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Основан</div>
-            </GlassCard>
-            <GlassCard className="text-center py-6">
-              <div className="text-3xl font-bold text-neon-blue mb-1">{uni.employment_rate}%</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wider">Трудоустройство</div>
-            </GlassCard>
+            <StatBox label="Студентов" value={uni.total_students ? (uni.total_students/1000).toFixed(1) + 'k' : '—'} />
+            <StatBox label="Основан" value={uni.founded_year} />
+            <StatBox label="Трудоустройство" value={uni.employment_rate ? uni.employment_rate + '%' : '—'} highlight />
           </div>
 
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Специальности</h2>
-            <div className="flex flex-wrap gap-3">
+          {/* Programs */}
+          <section>
+            <h2 className="text-xl font-bold text-slate-900 mb-4">Образовательные программы</h2>
+            <div className="space-y-3">
               {uni.programs?.map((prog) => (
-                <div key={prog.id} className="group relative px-4 py-3 bg-white/5 hover:bg-neon-blue/20 border border-white/10 rounded-xl transition cursor-pointer flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-mono text-neon-blue">
-                    {prog.code?.substring(0,3) || 'IT'}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-white group-hover:text-neon-blue transition">
-                      {prog.name_ru}
+                <Card key={prog.id} padding="p-4" hover className="flex items-center justify-between group cursor-pointer border-l-4 border-l-transparent hover:border-l-primary-500">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 font-mono text-xs flex items-center justify-center">
+                        {prog.code?.substring(0,3) || 'IT'}
                     </div>
-                    <div className="text-xs text-slate-500">Бакалавриат</div>
+                    <div>
+                        <h4 className="font-semibold text-slate-800 group-hover:text-primary-600 transition">{prog.name_ru}</h4>
+                        <p className="text-xs text-slate-500">{prog.degree === 'bachelor' ? 'Бакалавриат' : 'Магистратура'}</p>
+                    </div>
                   </div>
-                </div>
+                  <div className="text-right">
+                    <div className="font-bold text-slate-900">{prog.price?.toLocaleString()} ₸</div>
+                    <div className="text-xs text-slate-400">в год</div>
+                  </div>
+                </Card>
               ))}
             </div>
-          </div>
+          </section>
         </div>
 
+        {/* RIGHT COLUMN */}
         <div className="space-y-6">
-          <GlassCard>
-            <h3 className="font-bold text-white mb-4">Контакты</h3>
-            <div className="space-y-4 text-sm text-slate-300">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/5 rounded-lg"><Phone className="w-4 h-4 text-neon-blue"/></div>
-                {uni.phone || '+7 (700) 000-00-00'}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/5 rounded-lg"><MapPin className="w-4 h-4 text-neon-blue"/></div>
-                {uni.address || uni.city}
-              </div>
+          <Card>
+            <h3 className="font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Контакты</h3>
+            <div className="space-y-4 text-sm">
+              <ContactItem icon={Phone} text={uni.phone || '+7 (700) 000-00-00'} />
+              <ContactItem icon={MapPin} text={uni.address || uni.city} />
+              <ContactItem icon={Globe} text={uni.email || 'info@university.kz'} />
             </div>
-          </GlassCard>
+          </Card>
 
           {/* ISPFRAVLENO: bg-linear-to-br */}
-          <GlassCard className="bg-linear-to-br from-neon-blue/20 to-purple-500/20 border-neon-blue/30">
-            <h3 className="font-bold text-white mb-2">Поступление 2025</h3>
-            <ul className="space-y-2 text-sm text-slate-200 mb-4">
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-neon-blue"/> Прием документов: Июнь</li>
-              <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-neon-blue"/> Гранты доступны</li>
-            </ul>
-            <button className="w-full py-2 bg-white text-deep-blue-900 font-bold rounded-lg hover:scale-105 transition">
-              Подать заявку
+          <Card className="bg-linear-to-br from-primary-600 to-primary-800 text-white border-none shadow-lg shadow-primary-600/20">
+            <h3 className="font-bold text-lg mb-2">Приемная комиссия</h3>
+            <div className="space-y-3 text-sm text-primary-100 mb-6">
+              <div className="flex items-center gap-2"><Clock className="w-4 h-4"/> Старт: 20 Июня</div>
+              <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> Гранты: Есть</div>
+            </div>
+            <button className="w-full py-2.5 bg-white text-primary-700 font-bold rounded-lg hover:bg-primary-50 transition shadow-sm">
+              Подать документы
             </button>
-          </GlassCard>
+          </Card>
         </div>
       </div>
     </div>
   );
 };
+
+// Helper components
+const StatBox = ({ label, value, highlight }) => (
+    <Card className="text-center py-4">
+        <div className={cn("text-2xl font-bold mb-1", highlight ? "text-primary-600" : "text-slate-800")}>
+            {value}
+        </div>
+        <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{label}</div>
+    </Card>
+);
+
+const ContactItem = ({ icon: Icon, text }) => (
+    <div className="flex items-start gap-3 text-slate-600">
+        <div className="p-1.5 bg-slate-100 rounded text-slate-500 mt-0.5"><Icon className="w-3.5 h-3.5"/></div>
+        {/* ISPFRAVLENO: wrap-break-word */}
+        <span className="flex-1 wrap-break-word">{text}</span>
+    </div>
+);
 
 export default UniversityDetail;

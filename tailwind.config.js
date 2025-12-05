@@ -7,32 +7,32 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Deep Blue Glassmorphism Theme
-        'deep-blue': {
-          900: '#0F172A',  // Bg-Main
-          800: '#1E293B',
-          700: '#334155',
-          600: '#475569',
+        // Основная палитра (по картинке)
+        primary: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          500: '#3b82f6', // Яркий синий для кнопок/акцентов
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af', // Глубокий синий (Header/Sidebar)
+          900: '#0f172a', // Текст заголовков
         },
-        'glass': 'rgba(255, 255, 255, 0.1)',
-        'neon-blue': '#3B82F6',
-      },
-      backdropBlur: {
-        'glass': '12px',
-      },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-in': 'slideIn 0.3s ease-out',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+        slate: {
+          50: '#f8fafc', // Фон страницы
+          100: '#f1f5f9', // Фон карточек/секций
+          200: '#e2e8f0', // Границы
+          500: '#64748b', // Вторичный текст
+          800: '#1e293b', // Основной текст
         },
-        slideIn: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        }
+        success: '#10b981', // Зеленый для статов
+        danger: '#ef4444',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'], // Нужен чистый шрифт
+      },
+      boxShadow: {
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)',
+        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025)',
       }
     },
   },

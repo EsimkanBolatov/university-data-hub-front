@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { GraduationCap, UserPlus } from 'lucide-react';
+import { GraduationCap, ArrowRight } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -30,62 +30,58 @@ const Register = () => {
     }
 
     setLoading(true);
-    
-    // Передаем данные в контекст (удаляем confirm_password)
     const { confirm_password, ...registerData } = formData;
-    const result = await register({
-      ...registerData,
-      role: 'user' // Значение по умолчанию
-    });
+    const result = await register({ ...registerData, role: 'user' });
 
-    if (result.success) {
-      navigate('/');
-    } else {
-      setError(result.error || 'Ошибка при регистрации');
-    }
+    if (result.success) navigate('/');
+    else setError(result.error || 'Ошибка при регистрации');
     
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <div className="flex justify-center mb-6">
-          <div className="bg-blue-100 p-3 rounded-full">
-            <UserPlus className="h-8 w-8 text-blue-600" />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="absolute top-0 left-0 w-full h-1/2 bg-primary-800 -z-10"></div>
+
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-10 relative">
+        <div className="flex justify-center -mt-16 mb-6">
+          <div className="bg-white p-4 rounded-2xl shadow-lg">
+            <div className="bg-primary-600 p-3 rounded-xl">
+               <GraduationCap className="h-8 w-8 text-white" />
+            </div>
           </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-center mb-8">Регистрация</h1>
+        <h1 className="text-2xl font-bold text-center text-slate-800 mb-8">Создать аккаунт</h1>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm border border-red-100">
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm border border-red-100 flex items-center justify-center">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">ФИО</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">ФИО</label>
             <input
               name="full_name"
               type="text"
               value={formData.full_name}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition text-slate-800"
               placeholder="Иванов Иван"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">Email</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
             <input
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition text-slate-800"
               placeholder="student@example.com"
               required
             />
@@ -93,25 +89,25 @@ const Register = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">Пароль</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Пароль</label>
               <input
                 name="password"
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition text-slate-800"
                 placeholder="••••••••"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">Повторите</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Повторите</label>
               <input
                 name="confirm_password"
                 type="password"
                 value={formData.confirm_password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition text-slate-800"
                 placeholder="••••••••"
                 required
               />
@@ -121,18 +117,22 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:bg-gray-400 mt-6 shadow-lg"
+            className="w-full bg-primary-700 text-white py-3.5 rounded-xl hover:bg-primary-800 transition font-semibold shadow-lg shadow-primary-700/20 flex items-center justify-center gap-2 mt-6 disabled:opacity-70"
           >
-            {loading ? 'Создание аккаунта...' : 'Зарегистрироваться'}
+            {loading ? 'Регистрация...' : (
+                <>Зарегистрироваться <ArrowRight className="w-4 h-4" /></>
+            )}
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-gray-600">
-          Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-            Войти
-          </Link>
-        </p>
+        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+          <p className="text-sm text-slate-500">
+            Уже есть аккаунт?{' '}
+            <Link to="/login" className="text-primary-600 hover:text-primary-800 font-semibold">
+              Войти
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
