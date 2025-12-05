@@ -1,206 +1,87 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { GraduationCap, Heart, GitCompare, LayoutGrid, Settings, LogOut, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { GraduationCap, Heart, GitCompare, LogOut, User, Menu } from 'lucide-react';
-import { useState } from 'react';
+import { cn } from '../../utils/cn';
 
 const Layout = () => {
-  const { user, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { pathname } = useLocation();
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const navigation = [
-    { name: 'Главная', path: '/' },
-    { name: 'Каталог', path: '/catalog' },
-    { name: 'Сравнение', path: '/compare', icon: GitCompare },
+  const menuItems = [
+    { icon: LayoutGrid, label: 'Главная', path: '/' },
+    { icon: Search, label: 'Каталог', path: '/catalog' },
+    { icon: GitCompare, label: 'Сравнение', path: '/compare' },
+    { icon: Heart, label: 'Избранное', path: '/favorites' },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <GraduationCap className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">
-                DataHub <span className="text-blue-600">ВУЗ-ов</span>
-              </span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-6">
-              {navigation.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center gap-2"
-                >
-                  {item.icon && <item.icon className="h-4 w-4" />}
-                  {item.name}
-                </Link>
-              ))}
+    <div className="flex min-h-screen bg-deep-blue-900 text-white">
+      {/* === LEFT SIDEBAR === */}
+      <aside className="w-64 fixed h-screen border-r border-white/10 bg-deep-blue-900/50 backdrop-blur-xl z-50 flex flex-col">
+        <div className="p-8">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="bg-neon-blue/20 p-2 rounded-xl group-hover:bg-neon-blue/30 transition">
+              <GraduationCap className="h-8 w-8 text-neon-blue" />
             </div>
+            <span className="font-bold text-xl tracking-tight">DataHub</span>
+          </Link>
+        </div>
 
-            {/* User Menu */}
-            <div className="hidden md:flex items-center space-x-4">
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/favorites"
-                    className="text-gray-700 hover:text-blue-600 transition flex items-center gap-2"
-                  >
-                    <Heart className="h-5 w-5" />
-                    <span>Избранное</span>
-                  </Link>
-                  
-                  <div className="flex items-center gap-3 pl-4 border-l">
-                    <div className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-gray-600" />
-                      <span className="text-sm font-medium text-gray-700">
-                        {user?.full_name || user?.email}
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="text-gray-600 hover:text-red-600 transition"
-                      title="Выйти"
-                    >
-                      <LogOut className="h-5 w-5" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/login"
-                    className="text-gray-700 hover:text-blue-600 transition font-medium"
-                  >
-                    Войти
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
-                    Регистрация
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-gray-700"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden py-4 border-t">
-              {navigation.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block py-2 text-gray-700 hover:text-blue-600"
-                >
-                  {item.name}
-                </Link>
-              ))}
-              
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/favorites"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2 text-gray-700 hover:text-blue-600"
-                  >
-                    Избранное
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="block w-full text-left py-2 text-red-600 hover:text-red-700"
-                  >
-                    Выйти
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2 text-gray-700 hover:text-blue-600"
-                  >
-                    Войти
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2 text-blue-600 hover:text-blue-700"
-                  >
-                    Регистрация
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
+        <nav className="flex-1 px-4 space-y-2">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group",
+                  isActive 
+                    ? "bg-neon-blue text-white shadow-lg shadow-neon-blue/20" 
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "group-hover:text-neon-blue")} />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
-      </header>
 
-      {/* Main Content */}
-      <main className="grow">
+        <div className="p-4 border-t border-white/10">
+          {user ? (
+            <div className="bg-white/5 rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* ISPFRAVLENO: bg-linear-to-tr */}
+                <div className="w-10 h-10 rounded-full bg-linear-to-tr from-neon-blue to-purple-500 flex items-center justify-center font-bold text-sm">
+                  {user.full_name?.[0] || 'U'}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold truncate w-24">{user.full_name}</span>
+                  <span className="text-xs text-slate-400">Student</span>
+                </div>
+              </div>
+              <button onClick={logout} className="text-slate-400 hover:text-red-400 transition">
+                <LogOut className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <Link 
+              to="/login"
+              className="flex items-center justify-center w-full py-3 bg-white/10 rounded-xl hover:bg-white/20 transition font-medium text-sm"
+            >
+              Войти в аккаунт
+            </Link>
+          )}
+        </div>
+      </aside>
+
+      {/* === MAIN CONTENT === */}
+      <main className="flex-1 ml-64 p-8 overflow-x-hidden relative">
+        <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-neon-blue/20 rounded-full blur-[120px] -z-10 pointer-events-none mix-blend-screen" />
+        <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] -z-10 pointer-events-none mix-blend-screen" />
         <Outlet />
       </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <GraduationCap className="h-8 w-8 text-blue-500" />
-                <span className="text-xl font-bold text-white">DataHub ВУЗ-ов</span>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Единая платформа для поиска и сравнения университетов Казахстана
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-white font-semibold mb-4">Навигация</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/" className="hover:text-blue-400">Главная</Link></li>
-                <li><Link to="/catalog" className="hover:text-blue-400">Каталог</Link></li>
-                <li><Link to="/compare" className="hover:text-blue-400">Сравнение</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-white font-semibold mb-4">Контакты</h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>Email: info@datahub.kz</li>
-                <li>Телефон: +7 (700) 123-45-67</li>
-                <li>г. Алматы, Казахстан</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-            <p>© 2025 DataHub ВУЗ-ов РК. Создано для ITU HACKATHON-2025</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
