@@ -159,7 +159,7 @@ const Layout = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow">
+      <main className="grow">
         <Outlet />
       </main>
 
@@ -190,7 +190,7 @@ const Layout = () => {
               <h3 className="text-white font-semibold mb-4">Контакты</h3>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li>Email: info@datahub.kz</li>
-                <li>Телефон: +7 (747) 293-98-73</li>
+                <li>Телефон: +7 (700) 123-45-67</li>
                 <li>г. Алматы, Казахстан</li>
               </ul>
             </div>

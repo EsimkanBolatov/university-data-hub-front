@@ -57,7 +57,7 @@ const Favorites = () => {
               onClick={() => navigate(`/university/${uni.id}`)}
               className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
             >
-              <div className="h-40 bg-gradient-to-br from-indigo-500 to-purple-600 relative overflow-hidden">
+              <div className="h-40 bg-linear-to-br from-indigo-500 to-purple-600 relative overflow-hidden">
                 {uni.logo_url && (
                   <img src={uni.logo_url} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500" alt={uni.name_ru} />
                 )}

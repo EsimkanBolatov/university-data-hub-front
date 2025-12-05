@@ -41,7 +41,7 @@ const UniversityDetail = () => {
     <div className="bg-gray-50 min-h-screen pb-12">
       {/* Hero Section */}
       <div className="bg-white border-b">
-        <div className="h-64 bg-gradient-to-r from-blue-600 to-indigo-800 relative">
+        <div className="h-64 bg-linear-to-r from-blue-600 to-indigo-800 relative">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="absolute bottom-0 left-0 right-0 p-8 max-w-7xl mx-auto flex items-end gap-6">
             <div className="w-32 h-32 bg-white rounded-xl shadow-lg p-2 flex items-center justify-center -mb-12 relative z-10">
