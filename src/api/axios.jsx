@@ -1,49 +1,102 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/AuthContext';
-import Layout from './components/layout/Layout';
+import axios from 'axios';
 
-// Pages
-import Home from './pages/Home';
-import Catalog from './pages/Catalog';
-import UniversityDetail from './pages/UniversityDetail';
-import Compare from './pages/Compare';
-import Favorites from './pages/Favorites';
-import Login from './pages/Login';
-import Register from './pages/Register';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
+// Создаем экземпляр axios
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
 });
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="catalog" element={<Catalog />} />
-              <Route path="university/:id" element={<UniversityDetail />} />
-              <Route path="compare" element={<Compare />} />
-              <Route path="favorites" element={<Favorites />} />
-            </Route>
-            
-            {/* Auth routes без layout */}
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+// Interceptor для добавления токена
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-export default App;
+// Interceptor для обработки ошибок
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Токен истек или невалиден
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// API методы
+
+// AUTH
+export const authAPI = {
+  login: (credentials) => 
+    apiClient.post('/auth/login', new URLSearchParams(credentials), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    }),
+  
+  register: (userData) => apiClient.post('/auth/register', userData),
+  
+  getMe: () => apiClient.get('/auth/me'),
+};
+
+// UNIVERSITIES
+export const universitiesAPI = {
+  getAll: (params = {}) => apiClient.get('/universities/', { params }),
+  
+  getById: (id) => apiClient.get(`/universities/${id}`),
+  
+  getStats: () => apiClient.get('/universities/stats'),
+  
+  compare: (ids) => apiClient.post('/universities/compare', ids),
+  
+  addToFavorites: (id) => apiClient.post(`/universities/${id}/favorite`),
+  
+  removeFromFavorites: (id) => apiClient.delete(`/universities/${id}/favorite`),
+  
+  getFavorites: () => apiClient.get('/universities/favorites/my'),
+  
+  create: (data) => apiClient.post('/universities/', data),
+  
+  update: (id, data) => apiClient.patch(`/universities/${id}`, data),
+  
+  delete: (id) => apiClient.delete(`/universities/${id}`),
+};
+
+// PROGRAMS
+export const programsAPI = {
+  search: (params = {}) => apiClient.get('/universities/programs/search', { params }),
+  
+  create: (universityId, data) => 
+    apiClient.post(`/universities/${universityId}/programs`, data),
+};
+
+// GRANTS
+export const grantsAPI = {
+  getByUniversity: (universityId) => 
+    apiClient.get(`/universities/${universityId}/grants`),
+  
+  create: (universityId, data) => 
+    apiClient.post(`/universities/${universityId}/grants`, data),
+};
+
+// ADMISSIONS
+export const admissionsAPI = {
+  getByUniversity: (universityId) => 
+    apiClient.get(`/universities/${universityId}/admissions`),
+  
+  create: (universityId, data) => 
+    apiClient.post(`/universities/${universityId}/admissions`, data),
+};
+
+export default apiClient;
