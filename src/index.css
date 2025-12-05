@@ -2,18 +2,45 @@
 
 @layer base {
   body {
-    /* Светлый фон, темный текст */
-    @apply bg-slate-50 text-slate-800 antialiased font-sans;
+    @apply bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 antialiased font-sans;
+  }
+
+  /* Гладкий скролл */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
   }
 }
 
-/* Скроллбар делаем более аккуратным */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full hover:bg-slate-400; 
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-lg bg-white/80 border border-white/30;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
 }

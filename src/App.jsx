@@ -11,6 +11,11 @@ import Compare from './pages/Compare';
 import Favorites from './pages/Favorites';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AiChatPage from './pages/AiChatPage'; // AI чат бетін импорттау
+
+// Admin pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AiSyncPage from './pages/admin/AiSyncPage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -28,12 +33,18 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            {/* Layout бар маршруттар */}
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="university/:id" element={<UniversityDetail />} />
               <Route path="compare" element={<Compare />} />
               <Route path="favorites" element={<Favorites />} />
+              <Route path="ai-chat" element={<AiChatPage />} /> {/* AI чат қосылды */}
+              
+              {/* Admin маршруттары */}
+              <Route path="admin" element={<AdminDashboard />} />
+              <Route path="admin/ai-sync" element={<AiSyncPage />} />
             </Route>
             
             {/* Auth routes без layout */}
