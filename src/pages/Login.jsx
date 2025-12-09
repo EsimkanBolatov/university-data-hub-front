@@ -1,91 +1,162 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { GraduationCap, ArrowRight } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
+
+// Логотип SVG компоненті
+const DataHubLogo = () => (
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="40" height="40" rx="12" fill="url(#logo-gradient)" />
+    <path d="M12 20C12 15.5817 15.5817 12 20 12C24.4183 12 28 15.5817 28 20C28 24.4183 24.4183 28 20 28" stroke="white" strokeWidth="2" />
+    <path d="M20 12V28" stroke="white" strokeWidth="2" />
+    <path d="M12 20H28" stroke="white" strokeWidth="2" />
+    <circle cx="20" cy="20" r="4" fill="white" />
+    <path d="M16 24L24 16" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+    <defs>
+      <linearGradient id="logo-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#4F46E5" />
+        <stop offset="1" stopColor="#7C3AED" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+  const [isHovered, setIsHovered] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
     const result = await login(email, password);
-    if (result.success) navigate('/');
+    if (result.success) navigate("/home");
     else setError(result.error);
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      {/* Decorative bg */}
-      <div className="absolute top-0 left-0 w-full h-1/2 bg-primary-800 -z-10"></div>
-
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-10 relative">
-        <div className="flex justify-center -mt-16 mb-6">
-          <div className="bg-white p-4 rounded-2xl shadow-lg">
-            <div className="bg-primary-600 p-3 rounded-xl">
-               <GraduationCap className="h-8 w-8 text-white" />
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-primary-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10">
+        <div className="flex justify-center mb-8">
+          <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-5 rounded-2xl shadow-lg">
+            <DataHubLogo />
           </div>
         </div>
-        
-        <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">С возвращением!</h1>
-        <p className="text-center text-slate-500 mb-8 text-sm">Введите данные для входа в DataHub</p>
+
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">
+            С возвращением!
+          </h1>
+          <p className="text-slate-500">
+            Войдите в свой аккаунт DataHub
+          </p>
+        </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm border border-red-100 flex items-center justify-center">
-            {error}
+          <div className="mb-6 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">
+            <div className="flex items-center gap-3">
+              <div className="h-6 w-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-red-600 font-bold text-sm">!</span>
+              </div>
+              <span className="text-sm">{error}</span>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Электронная почта
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition text-slate-800"
+              className="w-full px-5 py-3.5 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 text-slate-800 placeholder:text-slate-400"
               placeholder="name@university.kz"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Пароль</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition text-slate-800"
-              placeholder="••••••••"
-              required
-            />
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-semibold text-slate-700">
+                Пароль
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-xs text-primary-600 hover:text-primary-800 font-medium"
+              >
+                {showPassword ? "Скрыть" : "Показать"}
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-5 py-3.5 bg-white border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 text-slate-800 placeholder:text-slate-400 pr-12"
+                placeholder="Введите ваш пароль"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
 
+          {/* КНОПКА - МӘНЕ МЫНА ЖЕРДЕ! */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary-700 text-white py-3.5 rounded-xl hover:bg-primary-800 transition font-semibold shadow-lg shadow-primary-700/20 flex items-center justify-center gap-2 disabled:opacity-70"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="w-full bg-gradient-to-r from-primary-600 via-primary-600 to-primary-700 text-white py-4 rounded-xl hover:from-primary-700 hover:via-primary-700 hover:to-primary-800 active:scale-[0.98] transition-all duration-200 font-bold text-lg shadow-lg shadow-primary-600/30 hover:shadow-primary-700/40 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed mt-8"
           >
-            {loading ? 'Вход...' : (
-                <>Войти <ArrowRight className="w-4 h-4" /></>
+            {loading ? (
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Вход в систему...</span>
+              </div>
+            ) : (
+              <>
+                <span className="font-bold tracking-wide">ВОЙТИ В АККАУНТ</span>
+                <ArrowRight 
+                  className={`w-5 h-5 transition-transform duration-300 ${
+                    isHovered ? "translate-x-2" : ""
+                  }`} 
+                  strokeWidth={3}
+                />
+              </>
             )}
           </button>
         </form>
 
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
           <p className="text-sm text-slate-500">
-            Нет аккаунта?{' '}
-            <Link to="/register" className="text-primary-600 hover:text-primary-800 font-semibold">
-              Зарегистрироваться
+            Ещё нет аккаунта?{" "}
+            <Link
+              to="/register"
+              className="text-primary-600 hover:text-primary-800 font-semibold hover:underline"
+            >
+              Создать аккаунт
             </Link>
           </p>
         </div>

@@ -1,41 +1,41 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { GraduationCap, ArrowRight } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { GraduationCap, ArrowRight } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
-  
+
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    password: '',
-    confirm_password: ''
+    full_name: "",
+    email: "",
+    password: "",
+    confirm_password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (formData.password !== formData.confirm_password) {
-      setError('Пароли не совпадают');
+      setError("Пароли не совпадают");
       return;
     }
 
     setLoading(true);
     const { confirm_password, ...registerData } = formData;
-    const result = await register({ ...registerData, role: 'user' });
+    const result = await register({ ...registerData, role: "user" });
 
-    if (result.success) navigate('/');
-    else setError(result.error || 'Ошибка при регистрации');
-    
+    if (result.success) navigate("/home");
+    else setError(result.error || "Ошибка при регистрации");
+
     setLoading(false);
   };
 
@@ -47,12 +47,14 @@ const Register = () => {
         <div className="flex justify-center -mt-16 mb-6">
           <div className="bg-white p-4 rounded-2xl shadow-lg">
             <div className="bg-primary-600 p-3 rounded-xl">
-               <GraduationCap className="h-8 w-8 text-white" />
+              <GraduationCap className="h-8 w-8 text-white" />
             </div>
           </div>
         </div>
-        
-        <h1 className="text-2xl font-bold text-center text-slate-800 mb-8">Создать аккаунт</h1>
+
+        <h1 className="text-2xl font-bold text-center text-slate-800 mb-8">
+          Создать аккаунт
+        </h1>
 
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm border border-red-100 flex items-center justify-center">
@@ -62,7 +64,9 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">ФИО</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              ФИО
+            </label>
             <input
               name="full_name"
               type="text"
@@ -75,7 +79,9 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Email
+            </label>
             <input
               name="email"
               type="email"
@@ -89,7 +95,9 @@ const Register = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Пароль</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Пароль
+              </label>
               <input
                 name="password"
                 type="password"
@@ -101,7 +109,9 @@ const Register = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Повторите</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Повторите
+              </label>
               <input
                 name="confirm_password"
                 type="password"
@@ -119,16 +129,23 @@ const Register = () => {
             disabled={loading}
             className="w-full bg-primary-700 text-white py-3.5 rounded-xl hover:bg-primary-800 transition font-semibold shadow-lg shadow-primary-700/20 flex items-center justify-center gap-2 mt-6 disabled:opacity-70"
           >
-            {loading ? 'Регистрация...' : (
-                <>Зарегистрироваться <ArrowRight className="w-4 h-4" /></>
+            {loading ? (
+              "Регистрация..."
+            ) : (
+              <>
+                Зарегистрироваться <ArrowRight className="w-4 h-4" />
+              </>
             )}
           </button>
         </form>
 
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
           <p className="text-sm text-slate-500">
-            Уже есть аккаунт?{' '}
-            <Link to="/login" className="text-primary-600 hover:text-primary-800 font-semibold">
+            Уже есть аккаунт?{" "}
+            <Link
+              to="/login"
+              className="text-primary-600 hover:text-primary-800 font-semibold"
+            >
               Войти
             </Link>
           </p>
