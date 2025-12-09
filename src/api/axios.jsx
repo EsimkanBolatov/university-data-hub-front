@@ -99,4 +99,10 @@ export const admissionsAPI = {
     apiClient.post(`/universities/${universityId}/admissions`, data),
 };
 
+// AI
+export const aiAPI = {
+  chat: (question) => apiClient.post('/ai/chat', { question }),
+  recommend: (data) => apiClient.post('/ai/recommend', data),
+  compare: (ids) => apiClient.post('/ai/compare', { university_ids: ids }),
+};
 export default apiClient;

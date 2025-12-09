@@ -1,57 +1,177 @@
+// src/pages/AiChatPage.jsx
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Bot, User, Send, Sparkles, BookOpen, MapPin, GraduationCap, ArrowLeft, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
+import {
+  User, Send, Sparkles, ArrowLeft, Mic, Volume2, VolumeX, StopCircle, AlertCircle
+} from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { cn } from '../utils/cn';
+import EveBot from '../components/ui/EveBot';
+import { aiAPI } from '../api/axios'; // Импортируем наше API
 
 const AiChatPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const initialMessage = location.state?.initialMessage || '';
-  
-  const [messages, setMessages] = useState([
-    {
+
+  // Состояния
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [botState, setBotState] = useState('idle');
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [supportError, setSupportError] = useState(null);
+
+  const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const synthesisRef = useRef(window.speechSynthesis);
+
+  // Инициализация Web Speech API
+  useEffect(() => {
+    // Проверка поддержки браузером
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setSupportError("Ваш браузер не поддерживает голосовой ввод. Используйте Chrome или Safari.");
+    } else {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false; // Останавливаемся после одной фразы
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'ru-RU';
+
+      recognitionRef.current.onstart = () => {
+        console.log("Микрофон включен");
+        setIsListening(true);
+        setBotState('listening');
+      };
+
+      recognitionRef.current.onend = () => {
+        console.log("Микрофон выключен");
+        setIsListening(false);
+        // Возвращаем в idle только если бот не начал сразу отвечать
+        setBotState((prev) => (prev === 'speaking' ? 'speaking' : 'idle'));
+      };
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("Распознано:", transcript);
+        setInput(transcript);
+        handleSendMessage(transcript);
+      };
+
+      // ОБРАБОТКА ОШИБОК МИКРОФОНА
+      recognitionRef.current.onerror = (event) => {
+        console.error("Ошибка SpeechRecognition:", event.error);
+        setIsListening(false);
+        setBotState('idle');
+
+        if (event.error === 'not-allowed') {
+          alert("⚠️ Доступ к микрофону запрещен. Разрешите его в настройках браузера.");
+        } else if (event.error === 'audio-capture') {
+          console.warn("Audio capture failed. Check system input settings.");
+        }
+      };
+    }
+
+    // Приветствие
+    const welcomeMsg = {
       id: 1,
       role: 'assistant',
-      content: 'Привет! Я AI-ассистент по университетам Казахстана. Я могу помочь вам:\n\n• Найти ВУЗы по критериям (город, общежитие, специальность)\n• Дать рекомендации на основе ваших баллов\n• Сравнить университеты\n• Ответить на вопросы о программах и поступлении\n\nЧем могу помочь?',
+      content: 'Привет! Я ваш AI-помощник. Нажмите на микрофон, чтобы поговорить со мной.',
       timestamp: new Date(),
-    },
-  ]);
-  
-  const [input, setInput] = useState(initialMessage);
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  
-  const sampleQuestions = [
-    "Какие вузы есть в Алматы с общежитием?",
-    "У меня 100 баллов, люблю физику. Что посоветуете?",
-    "Лучшие IT университеты в Казахстане",
-    "Стоимость обучения в КазНУ",
-    "Какие есть медицинские программы?",
-    "ВУЗы с общежитием в Астане",
-  ];
+    };
+    setMessages([welcomeMsg]);
 
-  useEffect(() => {
     if (initialMessage) {
-      setTimeout(() => {
-        handleSendMessage(initialMessage);
-      }, 500);
+      handleSendMessage(initialMessage);
     }
-  }, [initialMessage]);
 
+    // Очистка при размонтировании
+    return () => {
+      if (synthesisRef.current) synthesisRef.current.cancel();
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // Игнорируем ошибки остановки
+        }
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Автоскролл
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const speakText = (text) => {
+    if (!voiceEnabled || !text || !synthesisRef.current) return;
+
+    synthesisRef.current.cancel();
+
+    // Очистка текста от Markdown символов для корректного чтения
+    const cleanText = text.replace(/[*#]/g, '');
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ru-RU';
+    utterance.rate = 1.1; // Немного ускорим речь
+    utterance.pitch = 1.0;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setBotState('speaking');
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setBotState('idle');
+    };
+
+    utterance.onerror = (e) => {
+      console.error("Ошибка синтеза речи:", e);
+      setIsSpeaking(false);
+      setBotState('idle');
+    };
+
+    synthesisRef.current.speak(utterance);
+  };
+
+  // ФУНКЦИЯ ВКЛЮЧЕНИЯ МИКРОФОНА
+  const toggleListening = async () => {
+    if (!recognitionRef.current) {
+      alert(supportError || "Голосовой ввод недоступен");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      return;
+    }
+
+    // Если бот говорит, затыкаем его перед слушанием
+    if (isSpeaking) {
+      synthesisRef.current.cancel();
+      setIsSpeaking(false);
+    }
+
+    // Запрос доступа к микрофону
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      recognitionRef.current.start();
+    } catch (err) {
+      console.error("Ошибка доступа к микрофону:", err);
+      alert("⚠️ Не удалось получить доступ к микрофону. Проверьте настройки системы.");
+    }
   };
 
   const handleSendMessage = async (message = input) => {
     if (!message.trim() || isLoading) return;
 
     const userMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       role: 'user',
       content: message,
       timestamp: new Date(),
@@ -60,121 +180,122 @@ const AiChatPage = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setBotState('processing'); // Бот начинает "думать"
 
     try {
-      // Mock API call - replace with actual API
-      const response = await mockAIResponse(message);
-      
+      // === ЗАПРОС К РЕАЛЬНОМУ БЭКЕНДУ ===
+      // Используем метод из api/axios.jsx
+      const response = await aiAPI.chat(message);
+
+      // Бэкенд возвращает JSON: { "answer": "Текст ответа" }
+      const aiResponseText = response.data.answer || "Извините, я не нашел информации по вашему запросу.";
+
       const aiMessage = {
-        id: messages.length + 2,
+        id: Date.now() + 1,
         role: 'assistant',
-        content: response,
+        content: aiResponseText,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      speakText(aiResponseText);
+
     } catch (error) {
-      console.error('Error:', error);
+      console.error('API Error:', error);
+      const errorMessage = "Извините, произошла ошибка соединения с сервером. Попробуйте позже.";
+
       setMessages(prev => [...prev, {
-        id: messages.length + 2,
+        id: Date.now() + 1,
         role: 'assistant',
-        content: 'Извините, произошла ошибка. Пожалуйста, попробуйте еще раз.',
+        content: errorMessage,
         timestamp: new Date(),
       }]);
+      speakText(errorMessage);
+
+      setBotState('idle');
     } finally {
       setIsLoading(false);
+      // Если озвучка выключена, сразу возвращаем бота в покой
+      if (!voiceEnabled) setBotState('idle');
     }
-  };
-
-  const mockAIResponse = async (message) => {
-    // Mock response based on question type
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('алматы') && lowerMessage.includes('общежити')) {
-      return `В Алматы несколько университетов предоставляют общежития для студентов:\n\n🎓 **Satbayev University**\n• Местоположение: Алматы\n• Общежитие: Да, 5 студенческих общежитий\n• Стоимость: ~50,000 KZT/месяц\n• Контакты: +7 (727) 123-45-67\n\n🎓 **КазНУ им. аль-Фараби**\n• Местоположение: Алматы\n• Общежитие: Да, 10 корпусов\n• Стоимость: ~45,000 KZT/месяц\n• Вместимость: 5000 студентов\n\n🎓 **КазНПУ им. Абая**\n• Местоположение: Алматы\n• Общежитие: Да, 3 корпуса\n• Стоимость: ~40,000 KZT/месяц\n\nРекомендую уточнять наличие мест заранее, так как спрос высокий.`;
-    }
-    
-    if (lowerMessage.includes('100 баллов') && lowerMessage.includes('физик')) {
-      return `С 100 баллами ЕНТ и интересом к физике у вас отличные возможности! Вот мои рекомендации:\n\n🏆 **Топ-3 варианта:**\n\n1. **КазНУ им. аль-Фараби - Физико-технический факультет**\n• Проходной балл: 95-105\n• Гранты: Есть\n• Особенности: Сильная научная база, современные лаборатории\n• Рейтинг: 9.2/10\n\n2. **Satbayev University - Инженерная физика**\n• Проходной балл: 90-100\n• Гранты: Ограниченно\n• Особенности: Прикладная физика, связь с промышленностью\n• Рейтинг: 8.8/10\n\n3. **Евразийский национальный университет - Факультет физики**\n• Проходной балл: 85-95\n• Гранты: Есть\n• Особенности: Международные программы\n• Рейтинг: 8.5/10\n\nСоветую также рассмотреть специальности, связанные с ядерной физикой и астрофизикой.`;
-    }
-    
-    if (lowerMessage.includes('it') || lowerMessage.includes('информатик')) {
-      return `Лучшие IT университеты в Казахстане:\n\n💻 **Топ-5 IT ВУЗов:**\n\n1. **Satbayev University**\n• Факультет: Информационные технологии\n• Специальности: Компьютерные науки, Кибербезопасность\n• Рейтинг: 9.5/10\n\n2. **КазНУ им. аль-Фараби**\n• Факультет: Механика-математика\n• Специальности: Прикладная математика, Data Science\n• Рейтинг: 9.3/10\n\n3. **Назарбаев Университет**\n• Школа: Инженерии и цифровых наук\n• Специальности: Computer Science, Robotics\n• Рейтинг: 9.8/10\n\n4. **МУИТ**\n• Направление: Цифровые технологии\n• Специальности: Разработка ПО, AI\n• Рейтинг: 9.0/10\n\n5. **КБТУ**\n• Факультет: Информационных технологий\n• Специальности: Software Engineering\n• Рейтинг: 8.9/10\n\nСоветую обратить внимание на грантовые программы и стажировки в IT-компаниях.`;
-    }
-    
-    return `Я проанализировал ваш вопрос: "${message}"\n\nНа основе данных о 120+ университетах Казахстана могу сказать:\n\n🔍 **Общие рекомендации:**\n1. Определите приоритеты: бюджет, город, специальность\n2. Проверьте наличие грантов и скидок\n3. Уточните требования к поступлению на текущий год\n4. Посетите дни открытых дверей\n\n📊 **Следующие шаги:**\n• Используйте фильтры в каталоге ВУЗов\n• Сравните интересующие университеты\n• Посмотрите отзывы студентов\n• Проверьте аккредитацию программ\n\nХотите уточнить какой-то конкретный аспект?`;
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const formatTime = (date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="h-[calc(100vh-2rem)] flex flex-col animate-fade-in relative overflow-hidden">
+
+      {/* Фон */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-200/20 rounded-full blur-3xl"></div>
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6 px-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-xl hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-xl bg-white hover:bg-slate-50 shadow-sm border border-slate-200 transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-slate-600" />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg">
-              <Bot className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">AI Ассистент</h1>
-              <p className="text-slate-500">Помощь в выборе университета</p>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">AI Ассистент</h1>
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span className={`w-2 h-2 rounded-full ${isSpeaking || isListening ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></span>
+              {isListening ? 'Слушаю...' : isSpeaking ? 'Говорю...' : isLoading ? 'Думаю...' : 'Онлайн'}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          Онлайн • База 120+ ВУЗов
-        </div>
+
+        <button
+          onClick={() => {
+            const newState = !voiceEnabled;
+            setVoiceEnabled(newState);
+            if (!newState) synthesisRef.current.cancel();
+          }}
+          className={`p-3 rounded-xl transition-all ${voiceEnabled ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}
+          title={voiceEnabled ? "Выключить звук" : "Включить звук"}
+        >
+          {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+        </button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Chat Container */}
-        <div className="lg:col-span-2">
-          <Card className="h-[600px] flex flex-col p-0 overflow-hidden">
-            {/* Chat Header */}
-            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-cyan-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-white shadow-sm">
-                    <GraduationCap className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900">Университетский помощник</h3>
-                    <p className="text-sm text-slate-500">База данных обновлена сегодня</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setMessages([messages[0]])}
-                  className="text-sm text-slate-600 hover:text-slate-900 px-4 py-2 rounded-lg hover:bg-white transition-colors"
-                >
-                  Очистить чат
-                </button>
-              </div>
-            </div>
+      <div className="flex-1 grid lg:grid-cols-2 gap-6 min-h-0">
 
-            {/* Messages */}
+        {/* Бот (Анимация) */}
+        <div className="hidden lg:flex flex-col items-center justify-center relative">
+          <div className="relative z-10 scale-125 transform transition-all duration-500">
+            {/* Передаем состояние боту */}
+            <EveBot state={botState} />
+          </div>
+
+          <div className="mt-8 text-center max-w-md">
+            {supportError ? (
+              <div className="text-red-500 flex items-center justify-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                {supportError}
+              </div>
+            ) : (
+              <>
+                <h3 className="text-xl font-medium text-slate-800 mb-2">
+                  {botState === 'listening' && "Я вас внимательно слушаю..."}
+                  {botState === 'processing' && "Анализирую ваш вопрос..."}
+                  {botState === 'speaking' && "Отвечаю..."}
+                  {botState === 'idle' && "Чем могу помочь?"}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  {voiceEnabled ? "Голосовой ответ включен" : "Звук выключен"}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Чат */}
+        <div className="flex flex-col h-full max-h-full">
+          <Card className="flex-1 flex flex-col overflow-hidden bg-white/80 backdrop-blur-md shadow-xl border-slate-200">
+
+            {/* Сообщения */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg) => (
                 <div
@@ -185,187 +306,94 @@ const AiChatPage = () => {
                   )}
                 >
                   <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                    msg.role === 'user' 
-                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white' 
-                      : 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
-                  )}>
-                    {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                  </div>
-                  
-                  <div className={cn(
-                    "max-w-[80%] rounded-2xl p-5",
+                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-md",
                     msg.role === 'user'
-                      ? 'bg-gradient-to-r from-primary-50 to-primary-100 border border-primary-100'
-                      : 'bg-slate-50 border border-slate-100'
+                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                      : 'bg-white text-blue-500 border border-blue-100'
                   )}>
-                    <div className="prose prose-sm max-w-none">
-                      {msg.content.split('\n').map((line, i) => (
-                        <p key={i} className="mb-2 last:mb-0">{line}</p>
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200">
-                      <span className="text-xs text-slate-500">
-                        {formatTime(new Date(msg.timestamp))}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => copyToClipboard(msg.content)}
-                          className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors"
-                          title="Копировать"
-                        >
-                          <Copy className="h-3.5 w-3.5 text-slate-500" />
-                        </button>
-                        {msg.role === 'assistant' && (
-                          <>
-                            <button className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors">
-                              <ThumbsUp className="h-3.5 w-3.5 text-slate-500 hover:text-emerald-500" />
-                            </button>
-                            <button className="p-1.5 hover:bg-slate-200 rounded-lg transition-colors">
-                              <ThumbsDown className="h-3.5 w-3.5 text-slate-500 hover:text-rose-500" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                    {msg.role === 'user' ? <User className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+                  </div>
+
+                  <div className={cn(
+                    "max-w-[85%] rounded-2xl p-4 shadow-sm text-sm md:text-base whitespace-pre-wrap",
+                    msg.role === 'user'
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none'
+                      : 'bg-white border border-slate-100 rounded-tl-none text-slate-700'
+                  )}>
+                    {msg.content}
                   </div>
                 </div>
               ))}
-              
+
               {isLoading && (
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white flex items-center justify-center">
-                    <Bot className="h-4 w-4" />
+                  <div className="w-10 h-10 rounded-full bg-white text-blue-500 border border-blue-100 flex items-center justify-center shadow-md">
+                    <Sparkles className="h-5 w-5" />
                   </div>
-                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                    </div>
+                  <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                   </div>
                 </div>
               )}
-              
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-6 border-t border-slate-100 bg-white">
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
+            {/* Ввод */}
+            <div className="p-4 bg-white border-t border-slate-100">
+              <div className="flex items-end gap-3">
+
+                {/* Кнопка записи */}
+                <button
+                  onClick={toggleListening}
+                  className={cn(
+                    "p-4 rounded-2xl transition-all duration-300 shadow-md flex-shrink-0 relative",
+                    isListening
+                      ? "bg-red-500 text-white shadow-red-200"
+                      : "bg-gradient-to-br from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:scale-105",
+                    supportError && "opacity-50 cursor-not-allowed grayscale"
+                  )}
+                  title={isListening ? "Остановить запись" : "Нажать и говорить"}
+                  disabled={!!supportError}
+                >
+                  {isListening && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping"></span>
+                  )}
+                  {isListening ? <StopCircle className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+                </button>
+
+                {/* Поле ввода */}
+                <div className="flex-1 relative bg-slate-50 rounded-2xl border border-slate-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Задайте вопрос о ВУЗах..."
-                    className="w-full px-5 py-4 pr-12 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    rows="2"
-                    disabled={isLoading}
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
+                    placeholder={isListening ? "Говорите..." : "Напишите сообщение..."}
+                    className="w-full px-4 py-3 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[50px]"
+                    rows="1"
+                    disabled={isLoading || isListening}
                   />
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!input.trim() || isLoading}
-                    className={cn(
-                      "absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all",
-                      input.trim() && !isLoading
-                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:scale-105"
-                        : "bg-slate-100 text-slate-400"
-                    )}
-                  >
-                    <Send className="h-5 w-5" />
-                  </button>
                 </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 mt-4">
-                <span className="text-xs text-slate-500 self-center">Примеры:</span>
-                {sampleQuestions.slice(0, 3).map((question, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setInput(question);
-                      setTimeout(() => handleSendMessage(question), 100);
-                    }}
-                    disabled={isLoading}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <Card className="p-6">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-500" />
-              Возможности AI
-            </h3>
-            <ul className="space-y-3">
-              {[
-                "Поиск ВУЗов по критериям",
-                "Рекомендации на основе баллов",
-                "Сравнение университетов",
-                "Информация о грантах",
-                "Прогноз поступления",
-                "Консультация по специальностям"
-              ].map((feature, idx) => (
-                <li key={idx} className="flex items-center gap-3 text-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                  <span className="text-slate-700">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-emerald-500" />
-              Популярные запросы
-            </h3>
-            <div className="space-y-3">
-              {sampleQuestions.map((question, idx) => (
+                {/* Кнопка отправки */}
                 <button
-                  key={idx}
-                  onClick={() => {
-                    setInput(question);
-                    setTimeout(() => handleSendMessage(question), 100);
-                  }}
-                  className="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-colors text-sm text-slate-700 hover:text-slate-900 group"
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isLoading}
+                  className={cn(
+                    "p-4 rounded-2xl transition-all duration-300 shadow-md flex-shrink-0",
+                    input.trim() && !isLoading
+                      ? "bg-slate-800 text-white hover:bg-slate-900 hover:scale-105"
+                      : "bg-slate-100 text-slate-300 cursor-not-allowed"
+                  )}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="line-clamp-2">{question}</span>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Send className="h-4 w-4 text-slate-400" />
-                    </div>
-                  </div>
+                  <Send className="h-6 w-6" />
                 </button>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-            <h3 className="font-bold text-lg mb-3">База знаний</h3>
-            <p className="text-slate-300 text-sm mb-4">
-              Система использует данные о 120+ университетах Казахстана, обновленные в реальном времени.
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-300">ВУЗов в базе</span>
-                <span className="font-bold">127</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-300">Образовательных программ</span>
-                <span className="font-bold">1,840</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-300">Городов</span>
-                <span className="font-bold">25</span>
+              <div className="text-center mt-2">
+                <p className="text-xs text-slate-400">
+                  {supportError ? "Голосовой ввод недоступен в этом браузере" : "Нажмите на микрофон для голосового общения"}
+                </p>
               </div>
             </div>
           </Card>
