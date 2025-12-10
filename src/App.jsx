@@ -12,7 +12,8 @@ import Compare from "./pages/Compare";
 import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import AiChatPage from "./pages/AiChatPage"; // AI чат бетін импорттау
+import AiChatPage from "./pages/AiChatPage"; 
+import CareerGuide from "./pages/CareerGuide";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -60,6 +61,8 @@ function App() {
               {/* Admin маршруттары */}
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="admin/ai-sync" element={<AiSyncPage />} />
+              {/* Новый роут Проф Гид */}
+              <Route path="career-guide" element={<CareerGuide />} />
             </Route>
 
             {/* Егер жол табылмаса, /login бетіне бағыттау */}

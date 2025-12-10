@@ -10,12 +10,13 @@ import {
   ShieldCheck,
   ChevronRight,
   Bot,
-  MessageSquare, // Иконка для AI Ассистента
+  MessageSquare,
   Globe,
   Maximize2,
   BarChart3,
   ExternalLink,
-  Brain
+  Brain,
+  Compass, // <-- Импортируем иконку компаса
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../utils/cn";
@@ -29,13 +30,13 @@ const Layout = () => {
 
   const [show3DTour, setShow3DTour] = useState(false);
 
-  // --- ИЗМЕНЕНИЕ 3: ДОБАВЛЕН ПУНКТ AI АССИСТЕНТ ---
+  // Основное меню
   const menuItems = [
     { icon: LayoutGrid, label: "Главная", path: "/home" },
     { icon: Search, label: "Каталог ВУЗов", path: "/catalog" },
     { icon: GitCompare, label: "Сравнение", path: "/compare" },
     { icon: Heart, label: "Избранное", path: "/favorites" },
-    { icon: MessageSquare, label: "AI Ассистент", path: "/ai-chat" }, // Новый пункт
+    { icon: MessageSquare, label: "AI Ассистент", path: "/ai-chat" },
     { icon: Brain, label: "Boljam AI", path: "/boljam" },
   ];
 
@@ -74,6 +75,7 @@ const Layout = () => {
             const isActive = pathname === item.path;
 
             if (item.path === "/boljam") {
+              // ... (код кнопки Boljam без изменений)
               return (
                 <button
                   key={item.path}
@@ -149,10 +151,36 @@ const Layout = () => {
             );
           })}
 
+          {/* --- НОВАЯ КНОПКА ПРОФ ГИД (ДОБАВЛЕНА СЮДА) --- */}
+          <Link
+            to="/career-guide"
+            className={cn(
+              "flex items-center gap-3 w-full px-5 py-3.5 rounded-xl transition-all duration-300 font-medium text-sm mt-6 mb-2 group relative overflow-hidden",
+              pathname === '/career-guide' 
+                ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30"
+                : "bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 hover:from-violet-100 hover:to-fuchsia-100"
+            )}
+          >
+            <div className={cn(
+              "p-1.5 rounded-lg transition-colors",
+              pathname === '/career-guide' ? "bg-white/20" : "bg-white text-violet-600"
+            )}>
+              <Compass className="h-4 w-4" />
+            </div>
+            <span>Проф Гид</span>
+            
+            {/* Декоративный блик для акцента */}
+            {pathname !== '/career-guide' && (
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            )}
+            
+            {pathname === '/career-guide' && <ChevronRight className="h-4 w-4 ml-auto" />}
+          </Link>
+
           {/* 3D Tour Widget Button */}
           <button
             onClick={() => setShow3DTour(true)}
-            className="flex items-center gap-3 w-full px-5 py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700 transition-all duration-300 font-medium text-sm shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 mt-6 group"
+            className="flex items-center gap-3 w-full px-5 py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700 transition-all duration-300 font-medium text-sm shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 group"
           >
             <div className="p-1.5 rounded-lg bg-white/20">
               <Globe className="h-4 w-4" />

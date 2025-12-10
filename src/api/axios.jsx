@@ -72,4 +72,13 @@ export const aiAPI = {
   sync: () => apiClient.post('/ai/sync'),
 };
 
+// --- API CAREER (Проф Гид) ---
+export const careerAPI = {
+  // Старт сессии
+  start: (data) => apiClient.post('/career/start', data),
+  
+  // Отправка ответа и получение следующего вопроса или результата
+  answer: (data) => apiClient.post('/career/answer', data),
+};
+
 export default apiClient;
