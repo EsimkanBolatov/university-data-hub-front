@@ -36,8 +36,11 @@ const AiChatPage = () => {
     } else {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false; // Останавливаемся после одной фразы
-      recognitionRef.current.interimResults = false;
+
+      // ИЗМЕНЕНИЕ 1: Непрерывное распознавание для записи длинных сообщений
+      recognitionRef.current.continuous = true;
+      // ИЗМЕНЕНИЕ 2: Промежуточные результаты, чтобы видеть текст в процессе речи
+      recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'ru-RU';
 
       recognitionRef.current.onstart = () => {
@@ -53,23 +56,34 @@ const AiChatPage = () => {
         setBotState((prev) => (prev === 'speaking' ? 'speaking' : 'idle'));
       };
 
+      // ИЗМЕНЕНИЕ 3: Новая логика обработки результатов для длинного текста
       recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("Распознано:", transcript);
-        setInput(transcript);
-        handleSendMessage(transcript);
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+
+        // Мы берем весь накопленный текст из сессии
+        const fullTranscript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+
+        console.log("Распознано:", fullTranscript);
+        setInput(fullTranscript);
+        // В continuous режиме мы НЕ отправляем сообщение автоматически,
+        // пользователь должен нажать стоп или отправить сам, когда закончит мысль.
       };
 
-      // ОБРАБОТКА ОШИБОК МИКРОФОНА
       recognitionRef.current.onerror = (event) => {
         console.error("Ошибка SpeechRecognition:", event.error);
-        setIsListening(false);
-        setBotState('idle');
+        // Не выключаем сразу при мелких ошибках (no-speech), только при критических
+        if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+           setIsListening(false);
+           setBotState('idle');
+        }
 
         if (event.error === 'not-allowed') {
           alert("⚠️ Доступ к микрофону запрещен. Разрешите его в настройках браузера.");
-        } else if (event.error === 'audio-capture') {
-          console.warn("Audio capture failed. Check system input settings.");
         }
       };
     }
@@ -87,21 +101,18 @@ const AiChatPage = () => {
       handleSendMessage(initialMessage);
     }
 
-    // Очистка при размонтировании
     return () => {
       if (synthesisRef.current) synthesisRef.current.cancel();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch {
-          // Игнорируем ошибки остановки
-        }
+        } catch { /* ignore */ }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Автоскролл
+  // Автоскролл к новому сообщению
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -116,8 +127,11 @@ const AiChatPage = () => {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'ru-RU';
-    utterance.rate = 1.1; // Немного ускорим речь
-    utterance.pitch = 1.0;
+
+    // ИЗМЕНЕНИЕ 4: Настройки голоса (громкость и четкость)
+    utterance.volume = 1.0; // Максимальная громкость (0.0 - 1.0)
+    utterance.rate = 1.1;   // Немного ускоренный темп
+    utterance.pitch = 1.0;  // Нормальная высота голоса
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -138,7 +152,6 @@ const AiChatPage = () => {
     synthesisRef.current.speak(utterance);
   };
 
-  // ФУНКЦИЯ ВКЛЮЧЕНИЯ МИКРОФОНА
   const toggleListening = async () => {
     if (!recognitionRef.current) {
       alert(supportError || "Голосовой ввод недоступен");
@@ -150,13 +163,11 @@ const AiChatPage = () => {
       return;
     }
 
-    // Если бот говорит, затыкаем его перед слушанием
     if (isSpeaking) {
       synthesisRef.current.cancel();
       setIsSpeaking(false);
     }
 
-    // Запрос доступа к микрофону
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
@@ -170,6 +181,11 @@ const AiChatPage = () => {
   const handleSendMessage = async (message = input) => {
     if (!message.trim() || isLoading) return;
 
+    // Если идет запись, останавливаем её перед отправкой
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
     const userMessage = {
       id: Date.now(),
       role: 'user',
@@ -180,14 +196,10 @@ const AiChatPage = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    setBotState('processing'); // Бот начинает "думать"
+    setBotState('processing');
 
     try {
-      // === ЗАПРОС К РЕАЛЬНОМУ БЭКЕНДУ ===
-      // Используем метод из api/axios.jsx
       const response = await aiAPI.chat(message);
-
-      // Бэкенд возвращает JSON: { "answer": "Текст ответа" }
       const aiResponseText = response.data.answer || "Извините, я не нашел информации по вашему запросу.";
 
       const aiMessage = {
@@ -215,13 +227,14 @@ const AiChatPage = () => {
       setBotState('idle');
     } finally {
       setIsLoading(false);
-      // Если озвучка выключена, сразу возвращаем бота в покой
       if (!voiceEnabled) setBotState('idle');
     }
   };
 
   return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col animate-fade-in relative overflow-hidden">
+    // ИЗМЕНЕНИЕ 5: Исправление высоты контейнера для работы скролла
+    // h-[calc(100vh-6rem)] учитывает padding родительского Layout (p-8 = 2rem * 2 = 4rem + header/margins)
+    <div className="h-[calc(100vh-6rem)] flex flex-col animate-fade-in relative overflow-hidden">
 
       {/* Фон */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
@@ -230,7 +243,7 @@ const AiChatPage = () => {
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 px-4">
+      <div className="flex items-center justify-between mb-6 px-4 shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
@@ -260,12 +273,12 @@ const AiChatPage = () => {
         </button>
       </div>
 
+      {/* ИЗМЕНЕНИЕ 6: min-h-0 критически важен для работы flex-скролла */}
       <div className="flex-1 grid lg:grid-cols-2 gap-6 min-h-0">
 
         {/* Бот (Анимация) */}
         <div className="hidden lg:flex flex-col items-center justify-center relative">
           <div className="relative z-10 scale-125 transform transition-all duration-500">
-            {/* Передаем состояние боту */}
             <EveBot state={botState} />
           </div>
 
@@ -291,11 +304,12 @@ const AiChatPage = () => {
           </div>
         </div>
 
-        {/* Чат */}
-        <div className="flex flex-col h-full max-h-full">
+        {/* Чат - Контейнер */}
+        {/* ИЗМЕНЕНИЕ 7: min-h-0 на Card позволяет скроллить внутренний контент */}
+        <div className="flex flex-col h-full min-h-0">
           <Card className="flex-1 flex flex-col overflow-hidden bg-white/80 backdrop-blur-md shadow-xl border-slate-200">
 
-            {/* Сообщения */}
+            {/* Сообщения - Область прокрутки */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg) => (
                 <div
@@ -341,7 +355,7 @@ const AiChatPage = () => {
             </div>
 
             {/* Ввод */}
-            <div className="p-4 bg-white border-t border-slate-100">
+            <div className="p-4 bg-white border-t border-slate-100 shrink-0">
               <div className="flex items-end gap-3">
 
                 {/* Кнопка записи */}
@@ -354,7 +368,7 @@ const AiChatPage = () => {
                       : "bg-gradient-to-br from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:scale-105",
                     supportError && "opacity-50 cursor-not-allowed grayscale"
                   )}
-                  title={isListening ? "Остановить запись" : "Нажать и говорить"}
+                  title={isListening ? "Остановить запись" : "Нажать и говорить (до 5 минут)"}
                   disabled={!!supportError}
                 >
                   {isListening && (
@@ -369,10 +383,10 @@ const AiChatPage = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-                    placeholder={isListening ? "Говорите..." : "Напишите сообщение..."}
+                    placeholder={isListening ? "Слушаю... (говорите дольше)" : "Напишите сообщение..."}
                     className="w-full px-4 py-3 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[50px]"
                     rows="1"
-                    disabled={isLoading || isListening}
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -392,7 +406,9 @@ const AiChatPage = () => {
               </div>
               <div className="text-center mt-2">
                 <p className="text-xs text-slate-400">
-                  {supportError ? "Голосовой ввод недоступен в этом браузере" : "Нажмите на микрофон для голосового общения"}
+                  {supportError
+                    ? "Голосовой ввод недоступен в этом браузере"
+                    : "Нажмите на микрофон для записи. Для отправки нажмите Стоп или Enter."}
                 </p>
               </div>
             </div>
