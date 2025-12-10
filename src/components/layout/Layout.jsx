@@ -1,3 +1,4 @@
+// src/components/layout/Layout.jsx
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -9,18 +10,11 @@ import {
   ShieldCheck,
   ChevronRight,
   Bot,
-  MessageSquare,
+  MessageSquare, // Иконка для AI Ассистента
   Globe,
   Maximize2,
-  Home,
-  BookOpen,
   BarChart3,
-  Users,
-  MapPin,
-  Target,
-  Filter,
   ExternalLink,
-  MessageCircle,
   Brain
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -35,11 +29,13 @@ const Layout = () => {
 
   const [show3DTour, setShow3DTour] = useState(false);
 
+  // --- ИЗМЕНЕНИЕ 3: ДОБАВЛЕН ПУНКТ AI АССИСТЕНТ ---
   const menuItems = [
     { icon: LayoutGrid, label: "Главная", path: "/home" },
     { icon: Search, label: "Каталог ВУЗов", path: "/catalog" },
     { icon: GitCompare, label: "Сравнение", path: "/compare" },
     { icon: Heart, label: "Избранное", path: "/favorites" },
+    { icon: MessageSquare, label: "AI Ассистент", path: "/ai-chat" }, // Новый пункт
     { icon: Brain, label: "Boljam AI", path: "/boljam" },
   ];
 
@@ -68,7 +64,7 @@ const Layout = () => {
           </Link>
         </div>
 
-        {/* Navigation - ЕСКЕРТУ: flex-1 ОСЫ ЖЕРДЕ! */}
+        {/* Navigation */}
         <nav className="flex-1 px-5 py-8 space-y-2 overflow-y-auto">
           <div className="px-5 mb-4 text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <BarChart3 className="h-3 w-3" />
@@ -76,7 +72,7 @@ const Layout = () => {
           </div>
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
-            
+
             if (item.path === "/boljam") {
               return (
                 <button
@@ -106,7 +102,7 @@ const Layout = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <ExternalLink 
+                    <ExternalLink
                       className={cn(
                         "h-4 w-4 transition-all",
                         isActive
@@ -197,7 +193,7 @@ const Layout = () => {
           )}
         </nav>
 
-        {/* User Profile - АВТОМАТТЫ ТҮРДЕ ТӨМЕНГЕ ТҮСЕТІН */}
+        {/* User Profile */}
         <div className="shrink-0 p-6 border-t border-slate-100/50 bg-white">
           {user ? (
             <div className="rounded-2xl p-4 bg-gradient-to-r from-slate-50 to-blue-50/30 border border-slate-200">
@@ -211,10 +207,10 @@ const Layout = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-semibold text-slate-800 truncate">
-                      Aibek Seidazimov
+                      {user.full_name || "Aibek Seidazimov"}
                     </span>
                     <span className="text-xs text-slate-500 truncate">
-                      aibekseiadazimov08@gmail.com
+                      {user.email || "aibekseiadazimov08@gmail.com"}
                     </span>
                   </div>
                 </div>

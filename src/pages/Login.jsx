@@ -1,25 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
-
-// Логотип SVG компоненті
-const DataHubLogo = () => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="40" height="40" rx="12" fill="url(#logo-gradient)" />
-    <path d="M12 20C12 15.5817 15.5817 12 20 12C24.4183 12 28 15.5817 28 20C28 24.4183 24.4183 28 20 28" stroke="white" strokeWidth="2" />
-    <path d="M20 12V28" stroke="white" strokeWidth="2" />
-    <path d="M12 20H28" stroke="white" strokeWidth="2" />
-    <circle cx="20" cy="20" r="4" fill="white" />
-    <path d="M16 24L24 16" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    <defs>
-      <linearGradient id="logo-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#4F46E5" />
-        <stop offset="1" stopColor="#7C3AED" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+import { ArrowRight, Eye, EyeOff, GraduationCap } from "lucide-react"; // Добавили GraduationCap
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -44,10 +26,14 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-primary-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 relative">
+
+        {/* Обновленная секция логотипа (как на странице регистрации) */}
         <div className="flex justify-center mb-8">
-          <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-5 rounded-2xl shadow-lg">
-            <DataHubLogo />
+          <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100">
+            <div className="bg-primary-600 p-3 rounded-xl">
+              <GraduationCap className="h-8 w-8 text-white" />
+            </div>
           </div>
         </div>
 
@@ -122,7 +108,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* КНОПКА - МӘНЕ МЫНА ЖЕРДЕ! */}
           <button
             type="submit"
             disabled={loading}

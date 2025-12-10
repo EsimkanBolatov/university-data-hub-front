@@ -9,7 +9,6 @@ import {
   ArrowRight,
   BarChart3,
   Bot,
-  MessageSquare,
   Sparkles,
   Globe,
   ChevronDown,
@@ -24,17 +23,14 @@ import { universitiesAPI } from "../api/axios";
 import { Card } from "../components/ui/Card";
 import GoogleMap from "../components/ui/GoogleMap";
 import { useState } from "react";
-
-// Helper function for className
-function cn(...inputs) {
-  return inputs.filter(Boolean).join(" ");
-}
+import { cn } from "../utils/cn";
 
 const Home = () => {
   const navigate = useNavigate();
   const [chatMessage, setChatMessage] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [selectedRegion, setSelectedRegion] = useState(null);
 
   const { data: stats, isLoading } = useQuery({
@@ -156,7 +152,7 @@ const Home = () => {
         />
         <StatCard
           title="Студентов"
-          value={stats?.total_students?.toLocaleString() || "550,000+"}
+          value={stats?.total_students ? stats.total_students.toLocaleString() : "550,000+"}
           icon={Users}
           color="from-emerald-500 to-green-500"
           trend="+5.3%"
@@ -207,10 +203,7 @@ const Home = () => {
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
               <div className="text-center text-white">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="bg-gradient-to-br from-primary-500 to-primary-600 p-2 rounded-xl">
-                    <GraduationCap className="h-5 w-5" />
-                  </div>
-                  <div className="text-3xl">🗺️</div>
+                  <div className="text-4xl">🗺️</div>
                 </div>
                 <div className="text-lg font-semibold mb-1">
                   Google Maps интеграция
@@ -531,12 +524,8 @@ const Home = () => {
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center group-hover/year:scale-110 transition-transform">
-                          {item.showIcon && (
-                            <div className="flex items-center justify-center">
-                              <GraduationCap className="h-5 w-5 text-blue-700" />
-                            </div>
-                          )}
-                          <span className="font-bold text-blue-700">
+                          {/* УБРАЛИ: Иконку шапочки здесь, оставили только год */}
+                          <span className="font-bold text-blue-700 text-sm">
                             {item.year}
                           </span>
                         </div>
@@ -689,7 +678,6 @@ const Home = () => {
                 key={uni.name}
                 onClick={() => {
                   setShowMap(true);
-                  // Можете добавить логику для автоматического перехода к университету на карте
                 }}
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 cursor-pointer transition-all duration-300 group border border-transparent hover:border-blue-200"
               >
@@ -697,7 +685,7 @@ const Home = () => {
                   {uni.showIcon && (
                     <div
                       className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md group-hover:scale-110 transition-transform",
+                        "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-md group-hover:scale-110 transition-transform bg-gradient-to-br",
                         uni.color
                       )}
                     >
@@ -706,11 +694,6 @@ const Home = () => {
                   )}
                   <div>
                     <div className="flex items-center gap-2">
-                      {uni.showIcon && (
-                        <div className="bg-gradient-to-br from-primary-500 to-primary-600 p-1 rounded-lg">
-                          <GraduationCap className="h-3 w-3 text-white" />
-                        </div>
-                      )}
                       <div className="font-semibold text-slate-800 group-hover:text-blue-700">
                         {uni.name}
                       </div>
