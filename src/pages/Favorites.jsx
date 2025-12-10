@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { universitiesAPI } from '../api/axios';
+import { favoritesAPI } from '../api/axios'; // Изменен импорт на favoritesAPI
 import { useNavigate } from 'react-router-dom';
 import { Star, MapPin, ArrowRight, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,8 @@ const Favorites = () => {
 
   const { data: favorites, isLoading, isError } = useQuery({
     queryKey: ['favorites'],
-    queryFn: () => universitiesAPI.getFavorites().then(res => res.data),
+    // Используем новый метод API
+    queryFn: () => favoritesAPI.getFavorites().then(res => res.data),
     enabled: isAuthenticated,
   });
 

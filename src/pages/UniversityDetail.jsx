@@ -1,15 +1,50 @@
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { MapPin, Star, Share2, Globe, Phone, Layers, CheckCircle, Clock, BookOpen } from 'lucide-react';
-import { universitiesAPI } from '../api/axios';
-import { Card } from '../components/ui/Card'; // Исправлен импорт
+// src/pages/UniversityDetail.jsx
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MapPin, Star, Share2, Globe, Phone, Layers, CheckCircle, Clock, BookOpen, Heart } from 'lucide-react';
+import { universitiesAPI, favoritesAPI } from '../api/axios';
+import { Card } from '../components/ui/Card';
 import { cn } from '../utils/cn';
+import { useAuth } from '../context/AuthContext';
 
 const UniversityDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+
+  // 1. Получение данных университета
   const { data: uni, isLoading } = useQuery({
     queryKey: ['university', id],
     queryFn: () => universitiesAPI.getById(id).then(res => res.data),
+  });
+
+  // 2. Проверка, находится ли в избранном
+  const { data: isFavorite } = useQuery({
+    queryKey: ['isFavorite', id],
+    queryFn: () => favoritesAPI.checkIsFavorite(id).then(res => res.data.is_favorite),
+    enabled: isAuthenticated && !!id,
+    retry: false,
+  });
+
+  // 3. Мутация для добавления/удаления из избранного
+  const { mutate: toggleFavorite, isPending: isFavLoading } = useMutation({
+    mutationFn: async () => {
+      if (!isAuthenticated) throw new Error('Unauthorized');
+
+      return isFavorite
+        ? favoritesAPI.removeFromFavorites(id)
+        : favoritesAPI.addToFavorites(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['isFavorite', id]);
+      queryClient.invalidateQueries(['favorites']);
+    },
+    onError: (error) => {
+      if (error.message === 'Unauthorized') {
+        navigate('/login');
+      }
+    }
   });
 
   if (isLoading) return <div className="text-center mt-20 text-slate-400 animate-pulse">Загрузка данных...</div>;
@@ -17,7 +52,7 @@ const UniversityDetail = () => {
 
   return (
     <div className="space-y-8 pb-12 animate-fade-in">
-      
+
       {/* HEADER CARD */}
       <Card className="relative overflow-hidden border-none shadow-lg bg-white">
         <div className="h-32 bg-primary-800 relative">
@@ -25,7 +60,6 @@ const UniversityDetail = () => {
         </div>
         <div className="px-8 pb-8">
             <div className="flex flex-col md:flex-row gap-6 items-start -mt-12 relative z-10">
-                {/* ISPFRAVLENO: shrink-0 */}
                 <div className="w-32 h-32 bg-white rounded-2xl p-2 shadow-lg border border-slate-100 shrink-0">
                     {uni.logo_url ? (
                         <img src={uni.logo_url} alt="Logo" className="w-full h-full object-contain rounded-xl" />
@@ -35,7 +69,7 @@ const UniversityDetail = () => {
                         </div>
                     )}
                 </div>
-                
+
                 <div className="flex-1 pt-2 md:pt-14">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
                         <h1 className="text-3xl font-bold text-slate-900">{uni.name_ru}</h1>
@@ -51,12 +85,27 @@ const UniversityDetail = () => {
                 </div>
 
                 <div className="pt-2 md:pt-14 flex gap-3 w-full md:w-auto">
+                    {/* Кнопка избранного */}
+                    <button
+                        onClick={() => toggleFavorite()}
+                        disabled={isFavLoading}
+                        className={cn(
+                            "flex-1 md:flex-none py-2.5 px-4 border rounded-lg transition flex justify-center items-center gap-2",
+                            isFavorite
+                                ? "bg-red-50 border-red-200 text-red-500 hover:bg-red-100"
+                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        )}
+                        title={isFavorite ? "Убрать из избранного" : "Добавить в избранное"}
+                    >
+                        <Heart className={cn("w-4 h-4", isFavorite && "fill-current")} />
+                    </button>
+
                     <button className="flex-1 md:flex-none py-2.5 px-4 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition flex justify-center items-center gap-2">
                         <Share2 className="w-4 h-4" />
                     </button>
-                    <a 
-                        href={uni.website} 
-                        target="_blank" 
+                    <a
+                        href={uni.website}
+                        target="_blank"
                         rel="noreferrer"
                         className="flex-1 md:flex-none py-2.5 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-md transition flex justify-center items-center gap-2"
                     >
@@ -70,7 +119,7 @@ const UniversityDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-8">
-          
+
           {/* About */}
           <section>
             <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -127,7 +176,6 @@ const UniversityDetail = () => {
             </div>
           </Card>
 
-          {/* ISPFRAVLENO: bg-linear-to-br */}
           <Card className="bg-linear-to-br from-primary-600 to-primary-800 text-white border-none shadow-lg shadow-primary-600/20">
             <h3 className="font-bold text-lg mb-2">Приемная комиссия</h3>
             <div className="space-y-3 text-sm text-primary-100 mb-6">
@@ -144,7 +192,20 @@ const UniversityDetail = () => {
   );
 };
 
-// Helper components
+// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
+
+// 1. Компонент для контактов (Здесь используется Icon)
+const ContactItem = ({ icon: Icon, text }) => (
+    <div className="flex items-start gap-3 text-slate-600">
+        <div className="p-1.5 bg-slate-100 rounded text-slate-500 mt-0.5">
+          {/* Использование Icon здесь устраняет ошибку no-unused-vars */}
+          <Icon className="w-3.5 h-3.5"/>
+        </div>
+        <span className="flex-1 break-words">{text}</span>
+    </div>
+);
+
+// 2. Компонент для статистики
 const StatBox = ({ label, value, highlight }) => (
     <Card className="text-center py-4">
         <div className={cn("text-2xl font-bold mb-1", highlight ? "text-primary-600" : "text-slate-800")}>
@@ -152,14 +213,6 @@ const StatBox = ({ label, value, highlight }) => (
         </div>
         <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{label}</div>
     </Card>
-);
-
-const ContactItem = ({ icon: Icon, text }) => (
-    <div className="flex items-start gap-3 text-slate-600">
-        <div className="p-1.5 bg-slate-100 rounded text-slate-500 mt-0.5"><Icon className="w-3.5 h-3.5"/></div>
-        {/* ISPFRAVLENO: wrap-break-word */}
-        <span className="flex-1 wrap-break-word">{text}</span>
-    </div>
 );
 
 export default UniversityDetail;
