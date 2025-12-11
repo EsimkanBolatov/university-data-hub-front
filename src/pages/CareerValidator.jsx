@@ -80,13 +80,21 @@ const CareerValidator = () => {
   // Мутация для отправки ответа
   const answerMutation = useMutation({
     mutationFn: (data) => careerValidatorAPI.answer(data),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const data = response.data;
       
       if (data.is_interview_complete) {
-        setVerdict(data);
-        setStep('results');
+        // 1. Интервью завершено. Загружаем результаты (вердикт)
+        try {
+          const verdictResponse = await careerValidatorAPI.getVerdict(sessionData.session_id);
+          setVerdict(verdictResponse.data); // Сохраняем полный вердикт с навыками
+          setStep('results'); // Только теперь переходим на экран результатов
+        } catch (error) {
+          console.error('Failed to fetch verdict:', error);
+          alert('Интервью завершено, но не удалось загрузить результаты. Попробуйте обновить страницу.');
+        }
       } else {
+        // 2. Интервью продолжается, следующий вопрос
         setCurrentQuestion(data.next_question);
         setQuestionNumber(prev => prev + 1);
         setAnswer('');
