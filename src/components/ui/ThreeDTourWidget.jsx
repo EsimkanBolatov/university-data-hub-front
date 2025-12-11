@@ -17,7 +17,7 @@ const ThreeDTourWidget = ({ isOpen, onClose }) => {
       city: 'Астана',
       type: 'Халықаралық',
       rating: 9.8,
-      image: 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=400&q=80',
+      image: 'https://upload.wikimedia.org/wikipedia/ru/thumb/a/ac/NU_Building.JPG/1200px-NU_Building.JPG',
       tours: [
         {
           name: 'Негізгі кампус',
@@ -46,7 +46,7 @@ const ThreeDTourWidget = ({ isOpen, onClose }) => {
       city: 'Алматы',
       type: 'Мемлекеттік',
       rating: 9.5,
-      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80',
+      image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
       tours: [
         {
           name: 'Тарихи корпус',
@@ -127,7 +127,7 @@ const ThreeDTourWidget = ({ isOpen, onClose }) => {
       city: 'Алматы',
       type: 'Халықаралық',
       rating: 9.4,
-      image: 'https://images.unsplash.com/photo-1569163139188-6d6a73e85602?auto=format&fit=crop&w=400&q=80',
+      image: 'https://www.kimep.kz/about/wp-content/blogs.dir/51/files/2018/02/comission.jpg',
       tours: [
         {
           name: 'Ағылшын Кампусы',

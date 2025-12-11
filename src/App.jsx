@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AiChatPage from "./pages/AiChatPage"; 
 import CareerGuide from "./pages/CareerGuide";
+import CareerValidator from "./pages/CareerValidator";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -56,13 +57,15 @@ function App() {
               <Route path="university/:id" element={<UniversityDetail />} />
               <Route path="compare" element={<Compare />} />
               <Route path="favorites" element={<Favorites />} />
-              <Route path="ai-chat" element={<AiChatPage />} />{" "}
               {/* AI чат қосылды */}
+              <Route path="ai-chat" element={<AiChatPage />} />{" "}
               {/* Admin маршруттары */}
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="admin/ai-sync" element={<AiSyncPage />} />
               {/* Новый роут Проф Гид */}
               <Route path="career-guide" element={<CareerGuide />} />
+              {/* ===== НОВЫЙ МАРШРУТ: AI Career Validator ===== */}
+              <Route path="career-validator" element={<CareerValidator />} />
             </Route>
 
             {/* Егер жол табылмаса, /login бетіне бағыттау */}

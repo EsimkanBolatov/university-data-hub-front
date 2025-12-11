@@ -16,7 +16,8 @@ import {
   BarChart3,
   ExternalLink,
   Brain,
-  Compass, // <-- Импортируем иконку компаса
+  Compass,
+  ClipboardCheck, // НОВАЯ ИКОНКА для Career Validator
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../utils/cn";
@@ -75,7 +76,6 @@ const Layout = () => {
             const isActive = pathname === item.path;
 
             if (item.path === "/boljam") {
-              // ... (код кнопки Boljam без изменений)
               return (
                 <button
                   key={item.path}
@@ -151,7 +151,44 @@ const Layout = () => {
             );
           })}
 
-          {/* --- НОВАЯ КНОПКА ПРОФ ГИД (ДОБАВЛЕНА СЮДА) --- */}
+{/* ===== НОВАЯ КНОПКА: AI CAREER VALIDATOR ===== */}
+          <Link
+            to="/career-validator"
+            className={cn(
+              "flex items-center gap-3 w-full px-5 py-3.5 rounded-xl transition-all duration-300 font-medium text-sm mb-2 group relative overflow-hidden",
+              pathname === '/career-validator' 
+                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/30"
+                : "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 hover:from-cyan-100 hover:to-blue-100"
+            )}
+          >
+            <div className={cn(
+              "p-1.5 rounded-lg transition-colors",
+              pathname === '/career-validator' ? "bg-white/20" : "bg-white text-cyan-600"
+            )}>
+              <ClipboardCheck className="h-4 w-4" />
+            </div>
+            <span>Career Validator</span>
+            
+            {/* Анимированный блик */}
+            {pathname !== '/career-validator' && (
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            )}
+            
+            {/* Badge NEW */}
+            <div className="ml-auto flex items-center gap-1">
+              <span className={cn(
+                "px-1.5 py-0.5 text-[10px] font-bold rounded-full",
+                pathname === '/career-validator' 
+                  ? "bg-white/30 text-white" 
+                  : "bg-cyan-200 text-cyan-800"
+              )}>
+                NEW
+              </span>
+              {pathname === '/career-validator' && <ChevronRight className="h-4 w-4" />}
+            </div>
+          </Link>
+
+          {/* ПРОФ ГИД */}
           <Link
             to="/career-guide"
             className={cn(
@@ -169,7 +206,6 @@ const Layout = () => {
             </div>
             <span>Проф Гид</span>
             
-            {/* Декоративный блик для акцента */}
             {pathname !== '/career-guide' && (
               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
             )}
