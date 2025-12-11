@@ -45,7 +45,10 @@ export const universitiesAPI = {
   getStats: () => apiClient.get('/universities/stats'),
 
   // Сравнение обычное (по характеристикам)
-  compare: (ids) => apiClient.post('/universities/compare', { ids }),
+  compare: (ids) => apiClient.post('/favorites/compare', { 
+  university_ids: ids,  // Бэкенд ждет поле "university_ids", а не "ids"
+  include_ai_analysis: false 
+}),
 };
 
 // --- API FAVORITES (Исправлено под v2 - новый роутер) ---
