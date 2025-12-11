@@ -81,4 +81,24 @@ export const careerAPI = {
   answer: (data) => apiClient.post('/career/answer', data),
 };
 
+// --- API CAREER VALIDATOR (Resume Verification) ---
+export const careerValidatorAPI = {
+  // Начать интервью (загрузить резюме)
+  start: (data) => apiClient.post('/resume-validator/start', data),
+  
+  // Отправить ответ на вопрос
+  answer: (data) => apiClient.post('/resume-validator/answer', data),
+  
+  // Получить финальный вердикт
+  getVerdict: (sessionId) => apiClient.get(`/resume-validator/verdict/${sessionId}`),
+  
+  // История прохождений
+  getHistory: () => apiClient.get('/resume-validator/history'),
+  
+  // Экспорт результатов в PDF
+  exportPDF: (sessionId) => apiClient.get(`/resume-validator/export/${sessionId}`, {
+    responseType: 'blob'
+  }),
+};
+
 export default apiClient;
