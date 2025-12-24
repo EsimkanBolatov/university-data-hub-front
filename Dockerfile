@@ -9,11 +9,15 @@ RUN npm install
 # 2. Копирование кода
 COPY . .
 
-# 3. Сборка (создается папка dist)
-# Убедитесь, что в Variables на Railway задан VITE_API_URL
+# 3. Сборка
+# Убедитесь, что в Variables на Railway задан VITE_API_URL, если он нужен при сборке
 RUN npm run build
 
-# 4. Запуск через vite preview
-# --host 0.0.0.0: Обязательно для Docker/Railway, чтобы открыть доступ извне
-# --port $PORT: Используем порт, который выдал Railway
-CMD sh -c "npm run preview -- --host 0.0.0.0 --port ${PORT:-5173}"
+# --- Изменение здесь ---
+# Устанавливаем легкий статический сервер глобально
+RUN npm install -g serve
+
+# 4. Запуск через serve
+# -s dist: раздавать папку dist как SPA (single page app)
+# -l $PORT: слушать порт, который выдал Railway
+CMD serve -s dist -l ${PORT:-5173}
