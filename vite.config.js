@@ -5,10 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   preview: {
-    allowedHosts: true, // Разрешает любые хосты (для Vite 6)
-    host: true,         // Слушать 0.0.0.0
+    host: '0.0.0.0', // <-- Самое важное: слушать 0.0.0.0, а не localhost
+    port: 8080,      // (Опционально) жестко задать порт, или оставить как есть
+    allowedHosts: true, // <-- Разрешить Railway обращаться к приложению (для Vite 6)
   },
   server: {
-    allowedHosts: true, // На случай, если используется dev сервер
+    host: '0.0.0.0', // На случай, если вы используете dev-режим
+    allowedHosts: true,
   }
 })

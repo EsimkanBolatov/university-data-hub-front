@@ -20,4 +20,4 @@ RUN npm install -g serve
 # 4. Запуск через serve
 # -s dist: раздавать папку dist как SPA (single page app)
 # -l $PORT: слушать порт, который выдал Railway
-CMD serve -s dist -l ${PORT:-5173}
+CMD npx serve -s dist -l tcp://0.0.0.0:${PORT:-5173}
